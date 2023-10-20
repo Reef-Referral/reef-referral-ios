@@ -1,5 +1,5 @@
 //
-//  HandleDeepLinkRequest.swift
+//  NotifyReferralSuccessRequest.swift
 //
 //
 //  Created by Alexis Creuzot on 20/10/2023.
@@ -7,14 +7,13 @@
 
 import Foundation
 
-struct HandleDeepLinkRequest: APIRequest {
+struct NotifyReferralSuccessRequest: APIRequest {
     typealias Response = Referral
 
-    let link_id: String
-    let udid: String
+    let referral_id: String
 
     var resourceName: String {
-        return "/handle_deep_link"
+        return "/notify_referral_success"
     }
 
     var httpMethod: HTTPMethod {

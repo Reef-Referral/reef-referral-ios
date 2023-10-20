@@ -25,21 +25,39 @@ class ReefReferalTests: XCTestCase {
     
     func testGenerateLink() {
         let generateExpectation = expectation(description: "AGenerate link Expectation")
+        let handleDeeplinkExpectation = expectation(description: "Handle deeplink Expectation")
+        let notifyReferralSuccessExpectation = expectation(description: "Notify Referral success Expectation")
+        let checkReferralStatusExpectation = expectation(description: "Check Referral status Expectation")
         let deleteExpectation = expectation(description: "Delete link Expectation")
-        
+
         Task {
             do {
                 let generateResult = try await generateLink()
+                generateExpectation.fulfill()
+                
+                let handleDeepLinkResult = try await handleDeepLink(linkId: generateResult.link.id)
+                handleDeeplinkExpectation.fulfill()
+                
+                try await notifyReferralSuccess(referralId: handleDeepLinkResult.referral.id)
+                notifyReferralSuccessExpectation.fulfill()
+                
+                try await checkReferralStatus(linkId: generateResult.link.id)
+                checkReferralStatusExpectation.fulfill()
+                
                 try await deleteLink(linkId: generateResult.link.id)
+                deleteExpectation.fulfill()
+                
             } catch let error {
                 XCTFail("\(error)")
             }
-            
-            generateExpectation.fulfill()
-            deleteExpectation.fulfill()
         }
         
-        let result = XCTWaiter().wait(for: [generateExpectation, deleteExpectation], timeout: 5)
+        let result = XCTWaiter().wait(for: [generateExpectation,
+                                            handleDeeplinkExpectation,
+                                            notifyReferralSuccessExpectation,
+                                            checkReferralStatusExpectation,
+                                            deleteExpectation],
+                                      timeout: 10)
         XCTAssertEqual(result, .completed)
     }
 
@@ -49,6 +67,39 @@ class ReefReferalTests: XCTestCase {
         case .success(let result):
             XCTAssertNotNil(result)
             return result
+        case .failure(let error):
+            throw error
+        }
+    }
+    
+    func handleDeepLink(linkId: String) async throws -> Referral {
+        let response = await ReefAPIClient.shared.send(HandleDeepLinkRequest(link_id: linkId, udid: "simulator_test"))
+        switch response {
+        case .success(let result):
+            XCTAssertNotNil(result)
+            return result
+        case .failure(let error):
+            throw error
+        }
+    }
+    
+    func notifyReferralSuccess(referralId: String) async throws {
+        let response = await ReefAPIClient.shared.send(NotifyReferralSuccessRequest(referral_id: referralId))
+        switch response {
+        case .success(let result):
+            XCTAssertNotNil(result)
+            return
+        case .failure(let error):
+            throw error
+        }
+    }
+    
+    func checkReferralStatus(linkId: String) async throws {
+        let response = await ReefAPIClient.shared.send(ReferralStatusesRequest(link_id: linkId))
+        switch response {
+        case .success(let result):
+            XCTAssertNotNil(result)
+            return
         case .failure(let error):
             throw error
         }

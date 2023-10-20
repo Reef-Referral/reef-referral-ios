@@ -13,7 +13,7 @@ public struct ReferralStatus: Decodable {
         case success
     }
     
-    public let referral_id: Int
+    public let referral_id: String
     public let udid: String
     public let status: Status
 }
