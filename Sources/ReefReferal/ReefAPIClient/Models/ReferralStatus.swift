@@ -8,7 +8,7 @@
 import Foundation
 
 public struct ReferralStatus: Decodable {
-    public enum Status: String, Decodable {
+    public enum Status: String, Codable {
         case received
         case success
     }

@@ -1,0 +1,23 @@
+//
+//  HandleDeepLinkRequest.swift
+//
+//
+//  Created by Alexis Creuzot on 20/10/2023.
+//
+
+import Foundation
+
+struct HandleDeepLinkRequest: APIRequest {
+    typealias Response = Referral
+
+    let linkId: String
+    let udid: String
+
+    var resourceName: String {
+        return "/handle_deep_link"
+    }
+
+    var httpMethod: HTTPMethod {
+        return .post
+    }
+}

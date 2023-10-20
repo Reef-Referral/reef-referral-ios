@@ -7,7 +7,6 @@
 
 import Foundation
 
-
 public struct ReferralLink: Codable {
     let link: ReferralLinkContent
 }
