@@ -7,6 +7,7 @@ let package = Package(
     name: "ReefReferal",
     platforms: [
             .iOS(.v14),
+            .macOS(.v12)
         ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.

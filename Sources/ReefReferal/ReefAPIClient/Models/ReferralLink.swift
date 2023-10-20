@@ -7,6 +7,17 @@
 
 import Foundation
 
+
 public struct ReferralLink: Codable {
-    let link: String
+    let link: ReferralLinkContent
+}
+
+public struct ReferralLinkContent: Codable {
+    let id: String
+    let app_id: String
+    let link_url: String
+    
+    var link: URL? {
+        return URL(string: link_url)
+    }
 }

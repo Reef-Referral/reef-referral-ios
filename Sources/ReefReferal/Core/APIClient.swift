@@ -102,28 +102,28 @@ extension APIClient {
     
     /// Create URLRequest based on the given request
     public func endpoint<T: APIRequest>(for request: T) -> URLRequest {
-        guard   let endpointURL = URL(string: request.resourceName,
-                                      relativeTo: api.baseEndpointUrl),
-            var components = URLComponents(url: endpointURL,
-                                           resolvingAgainstBaseURL: true) else {
-                                            fatalError("Invalid resourceName: \(request.resourceName)")
+        guard let endpointURL = URL(string: request.resourceName, relativeTo: api.baseEndpointUrl),
+            var components = URLComponents(url: endpointURL, resolvingAgainstBaseURL: true) else {
+                fatalError("Invalid resourceName: \(request.resourceName)")
         }
         
         var urlRequest = URLRequest(url: endpointURL)
-        urlRequest.setValue("application/x-www-form-urlencoded; charset=utf-8",
-                            forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         switch request.httpMethod {
         case .get:
             components.queryItems = self.parameters(for: request).queryItems
-            break
         default:
-            let queryString = self.parameters(for: request).queryString
-            urlRequest.httpBody = queryString.data(using: .utf8)
-            break
+            if let jsonData = try? JSONEncoder().encode(request) {
+                urlRequest.httpBody = jsonData
+            } else {
+                fatalError("Failed to encode request as JSON")
+            }
         }
+        
         urlRequest.url = components.url
         urlRequest.httpMethod = request.httpMethod.rawValue
         return urlRequest
     }
+
 }

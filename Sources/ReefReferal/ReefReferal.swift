@@ -1,16 +1,29 @@
 import Foundation
 
+
+public protocol ReefReferralDelegate {
+    func didRefer(statuses: [ReferralStatus])
+    func didReceiveReferral(from: String)
+}
+
 public class ReefReferral {
-    
-    public typealias RewardCallback = (() -> Void)?
-    
+        
     public static let shared = ReefReferral()
-    public var rewardCallBack: RewardCallback?
-    private var apiKey: String?
+    private var apiKey: String? // currently app-id
     
+    private var links : [String : URL] = [:]
     
-    public func start(apiKey: String) {
+    public func start(apiKey: String) async {
         self.apiKey = apiKey
+        
+        let testConnectionRequest = ReferralTestConnectionRequest(app_id: apiKey)
+        let result = await ReefAPIClient.shared.send(testConnectionRequest)
+        switch result {
+        case .success(_):
+            print("ReefReferral properly configured")
+        case .failure(let error):
+            print(error)
+        }
     }
     
     public func showReferralSheet() {
@@ -23,13 +36,13 @@ public class ReefReferral {
         // This is called when a referred user meets a specific condition defined by the developer
     }
     
-    public func checkReferralStatuses(linkID: String) async throws -> [ReferralStatus] {
-        guard let apiKey = apiKey else {
-            throw ReefReferralError.missingAPIKey
-        }
-        
-        return []
-    }
+//    public func checkReferralStatuses(linkID: String) async throws -> [ReferralStatus] {
+//        guard let apiKey = apiKey else {
+//            throw ReefReferralError.missingAPIKey
+//        }
+//        
+//        return []
+//    }
 }
 
 enum ReefReferralError: Error {

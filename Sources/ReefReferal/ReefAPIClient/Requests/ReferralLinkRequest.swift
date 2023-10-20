@@ -9,8 +9,9 @@
 import Foundation
 
 public struct ReferralLinkRequest: APIRequest {
-    public typealias Response = [ReferralLink]
+    public typealias Response = ReferralLink
     
+    var app_id: String
     public var resourceName: String {
         return "generate_referral_link"
     }

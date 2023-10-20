@@ -8,13 +8,14 @@
 import Foundation
 
 public struct ReferralTestConnectionRequest: APIRequest {
-    public typealias Response = String
+    public typealias Response = [String:Bool]
     
+    var app_id: String
     public var resourceName: String {
         return "test_connection"
     }
     
     public var httpMethod: HTTPMethod {
-        return .get
+        return .post
     }
 }

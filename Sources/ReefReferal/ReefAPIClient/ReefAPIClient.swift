@@ -37,7 +37,7 @@ public class ReefAPIClient : APIClient {
     public static var shared = ReefAPIClient()
     public var api: API = ReefAPI()
     
-    public func decode<T : APIRequest>(_ data: Data, statusCode: Int, request: T) async -> Result<T.Response, Error> {
+    public func decode<T: APIRequest>(_ data: Data, statusCode: Int, request: T) async -> Result<T.Response, Error> {
         do {
             let decodedResponse = try JSONDecoder().decode(ReefAPIResponse<T.Response>.self, from: data)
             if let message = decodedResponse.error {
@@ -51,4 +51,5 @@ public class ReefAPIClient : APIClient {
             return .failure(error)
         }
     }
+
 }
