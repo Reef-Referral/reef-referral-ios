@@ -22,7 +22,7 @@ You can use the [Swift Package Manager](https://swift.org/package-manager/) to i
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ReefReferral/ReefReferralSDK.git", from: "1.0.0")
+    .package(url: "https://github.com/ReefReferral/ReefReferralSDK.git", branch: "main")
 ]
 ```
 
