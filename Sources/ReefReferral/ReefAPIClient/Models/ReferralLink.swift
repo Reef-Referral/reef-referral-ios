@@ -8,15 +8,15 @@
 import Foundation
 
 public struct ReferralLink: Codable {
-    let link: ReferralLinkContent
+    public let link: ReferralLinkContent
 }
 
 public struct ReferralLinkContent: Codable {
-    let id: String
-    let app_id: String
-    let link_url: String
+    public let id: String
+    public let app_id: String
+    public let link_url: String
     
-    var link: URL? {
+    public var link: URL? {
         return URL(string: link_url)
     }
 }

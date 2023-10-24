@@ -7,6 +7,21 @@
 		<key>ReefReferal.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
+		<key>ReefReferral-Package.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
+		</dict>
+		<key>ReefReferral.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>0</integer>
+		</dict>
+		<key>reef-referral-ios.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
 	</dict>
@@ -18,6 +33,11 @@
 			<true/>
 		</dict>
 		<key>ReefReferalTests</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>ReefReferral</key>
 		<dict>
 			<key>primary</key>
 			<true/>

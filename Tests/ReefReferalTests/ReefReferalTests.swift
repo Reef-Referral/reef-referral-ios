@@ -1,5 +1,5 @@
 import XCTest
-@testable import ReefReferal
+@testable import ReefReferral
 
 class ReefReferalTests: XCTestCase {
 

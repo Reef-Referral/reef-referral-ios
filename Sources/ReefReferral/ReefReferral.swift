@@ -1,6 +1,5 @@
 import Foundation
 
-
 public protocol ReefReferralDelegate {
     /// Notifies the delegate about changes in referral statuses.
     ///
@@ -27,8 +26,22 @@ public class ReefReferral {
     
     private var delegate: ReefReferralDelegate?
     private var apiKey: String? // currently app-id, we'll need to do something more flexible
-    private var referralID : String? // ID received after handleDeepLink, used to notify server of referral reception and success
-    private var referralLinkID : String? // LinkID sent to potential referrees
+    
+    public var reefData: ReefData = ReefData.load()
+    
+    /// Clears link in case we want to create a new one
+    ///
+    public func clearLink() {
+        reefData.referralLink = nil
+        reefData.save()
+    }
+    
+    /// Clears link in case we want to create a new one
+    ///
+    public func clearReferralID() {
+        reefData.referralId = nil
+        reefData.save()
+    }
     
     /// Asynchronously starts the ReefReferral configuration with the given API key.
     ///
@@ -44,6 +57,7 @@ public class ReefReferral {
         switch result {
         case .success(_):
             print("ReefReferral properly configured")
+            await self.checkReferralStatuses()
         case .failure(let error):
             print(error)
         }
@@ -51,19 +65,23 @@ public class ReefReferral {
 
     /// Asynchronously generates a referral link.
     ///
-    /// - Returns: A `ReferralLink` object representing the generated link.
+    /// - Returns: A `ReferralLink` with the link.
     /// - Throws: Throws a `ReefReferralError.missingAPIKey` error if the API key is missing.
     ///
-    public func generateReferralLink() async throws -> ReferralLink {
+    public func generateReferralLink() async throws -> ReferralLinkContent {
 
         guard let apiKey else { throw ReefReferralError.missingAPIKey }
+        if let link = reefData.referralLink {
+            return link
+        }
         
         let request = ReferralLinkRequest(app_id: apiKey)
         let response = await ReefAPIClient.shared.send(request)
         switch response {
         case .success(let result):
-            self.referralLinkID = result.link.id
-            return result
+            reefData.referralLink = result.link
+            reefData.save()
+            return result.link
         case .failure(let error):
             throw error
         }
@@ -79,9 +97,9 @@ public class ReefReferral {
             return
         }
         
-        guard let referralLinkID else { return }
+        guard let link = reefData.referralLink else { return }
         
-        let statusesRequest = ReferralStatusesRequest(link_id: referralLinkID)
+        let statusesRequest = ReferralStatusesRequest(link_id: link.id)
         let response = await ReefAPIClient.shared.send(statusesRequest)
         
         switch response {
@@ -94,19 +112,39 @@ public class ReefReferral {
         }
     }
     
-    /// Asynchronously handles deep links with the given linkId and udid parameters.
+    /// Asynchronously handles deep links and extracts the link_id from the URL.
     ///
     /// - Parameters:
-    ///   - linkId: The unique identifier for the deep link.
-    ///   - udid: The unique device identifier.
+    ///   - url: The deep link URL.
     ///
-    public func handleDeepLink(linkId: String, udid: String) async {
+    public func handleDeepLink(url: URL) async {
         guard apiKey != nil else {
-            print("Missing API key, did you forgot to initialize ReefReferal SDK ?")
+            print("Missing API key, did you forget to initialize ReefReferral SDK?")
             return
         }
-        let request = HandleDeepLinkRequest(link_id: linkId, udid: udid)
-        _ = await ReefAPIClient.shared.send(request)
+        
+        if let referalId = reefData.referralId {
+            print("Referal already opened with referalID : \(referalId)")
+            return
+        }
+        
+        // Extract the link_id from the URL
+        if let linkId = url.lastPathComponent.isEmpty ? nil : url.lastPathComponent {
+            
+            let request = HandleDeepLinkRequest(link_id: linkId, udid: reefData.udid)
+            let response = await ReefAPIClient.shared.send(request)
+            switch response {
+            case .success(let result):
+                reefData.referralId = result.referral.id
+                reefData.save()
+                self.delegate?.didReceiveReferral(linkID: linkId)
+            case .failure(let failure):
+                print(failure)
+            }
+            
+        } else {
+            print("Invalid deep link URL")
+        }
     }
     
     /// Asynchronously triggers a referral success event with the given referralID parameter.
@@ -114,9 +152,13 @@ public class ReefReferral {
     /// - Parameters:
     ///   - referralID: The unique identifier for the referral.
     ///
-    public func triggerReferralSuccess(referralID: String) async {
+    public func triggerReferralSuccess() async {
         guard apiKey != nil else {
             print("Missing API key, did you forgot to initialize ReefReferal SDK ?")
+            return
+        }
+        guard let referralID = reefData.referralId else {
+            print("No referralID to send")
             return
         }
         let request = NotifyReferralSuccessRequest(referral_id: referralID)

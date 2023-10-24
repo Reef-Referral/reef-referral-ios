@@ -4,24 +4,18 @@
 import PackageDescription
 
 let package = Package(
-    name: "ReefReferal",
+    name: "reef-referral-ios",
     platforms: [
             .iOS(.v14),
             .macOS(.v12)
         ],
-    products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
-        .library(
-            name: "ReefReferal",
-            targets: ["ReefReferal"]),
-    ],
-    targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
-        .target(
-            name: "ReefReferal"),
-        .testTarget(
-            name: "ReefReferalTests",
-            dependencies: ["ReefReferal"]),
-    ]
-)
+        products: [
+            .library(
+                name: "ReefReferral",
+                targets: ["ReefReferral"]),
+        ],
+        targets: [
+            .target(
+                name: "ReefReferral"),
+        ]
+    )

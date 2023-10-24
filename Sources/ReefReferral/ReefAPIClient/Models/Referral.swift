@@ -8,12 +8,12 @@
 import Foundation
 
 public struct Referral: Codable {
-    let referral: ReferralContent
+    public let referral: ReferralContent
 }
 
 public struct ReferralContent: Codable {
-    let id: String
-    let status: ReferralStatus.Status
-    let udid: String
-    let link_id: String
+    public let id: String
+    public let status: ReferralStatus.Status
+    public let udid: String
+    public let link_id: String
 }
