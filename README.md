@@ -26,29 +26,64 @@ dependencies: [
 ]
 ```
 
+## Configuration
+
+To use the ReefReferral package effectively, you need to make additional configurations in your project.
+
+### Adding URL Type
+
+Add a URL Type to your app. This URL Type is necessary for handling deep links related to referrals. Follow these steps to add a URL Type:
+
+1. In Xcode, open your project settings
+2. Navigate to the "Info" > "URL Types" section
+3. Click the "+" button to add a new URL Type
+4. Set the URL Scheme to "reef-referal"
+
+
+### Allowing Insecure HTTP Loads
+
+For now we need to allow insecure HTTP Loads.
+Right-click on the info.plist file and select "Open As" > "Source Code."
+
+Add the following XML code inside the <dict> element:
+
+```xml
+<key>NSAppTransportSecurity</key>
+<dict>
+    <key>NSAllowsArbitraryLoads</key>
+    <true/>
+</dict>
+```
+
 ## Usage
 
-Integrating the ReefReferral SDK into your app is simple. 
 Here's a basic example of how to get started:
 
 ```swift
-import ReefReferralSDK
+import ReefReferral
 
-// Initialize the SDK with your API key
-ReefReferral.shared.start("<your_api_key>")
+// Initialize ReefReferral with your API key
+ReefReferral.shared.start(apiKey: "your-api-key") // For now use the App ID
 
-// Show the referral screen
-ReefReferral.shared.showReferralSheet()
+// -- Referring user functions
 
-// Set up a reward callback
-ReefReferral.shared.setRewardCallback { reward in
-    // Handle the reward
-    // reward is a custom object with details about the reward
+// Generate a referral link
+if let referralLink = await ReefReferral.shared.generateReferralLink() {
+    print("Referral Link: \(referralLink.link)")
 }
 
-// To call when your referred user has completed a set action
-// Examples : App launch, Review, Purchase...
-ReefReferral.shared.triggerReferralSuccess()
+// Check referral statuses
+let referralStatuses = await ReefReferral.shared.checkReferralStatuses()
+print("Referral Statuses: \(referralStatuses)")
+print(\(statuses.filter({ $0.status == .received }).count) referrals opened")
+print(\(statuses.filter({ $0.status == .success }).count) referrals connverted")
 
+// -- Referred user functions
+
+// Handle deep links, to be called in the App openURL hook
+ReefReferral.shared.handleDeepLink(url: deepLinkURL)
+
+// Trigger referral success
+ReefReferral.shared.triggerReferralSuccess()
 ```
 
