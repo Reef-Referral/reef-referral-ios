@@ -16,6 +16,8 @@ let package = Package(
         ],
         targets: [
             .target(
-                name: "ReefReferral"),
+                name: "ReefReferral",
+                resources: [.copy("README.md")]),
+            
         ]
     )
