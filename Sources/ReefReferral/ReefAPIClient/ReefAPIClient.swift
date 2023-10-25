@@ -8,7 +8,7 @@
 import Foundation
 
 public class ReefAPI : API {
-    public var baseEndpointUrl: URL = URL(string: "http://134.209.90.71:5000/")!
+    public var baseEndpointUrl: URL = URL(string: "https://api.reefreferral.com/")!
     public var session : URLSession = URLSession.shared
     public var commonParameters : Parameters = [:]
 }

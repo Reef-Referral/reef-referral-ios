@@ -39,22 +39,6 @@ Add a URL Type to your app. This URL Type is necessary for handling deep links r
 3. Click the "+" button to add a new URL Type
 4. Set the URL Scheme to "reef-referal"
 
-
-### Allowing Insecure HTTP Loads
-
-For now we need to allow insecure HTTP Loads.
-Right-click on the info.plist file and select "Open As" > "Source Code."
-
-Add the following XML code inside the <dict> element:
-
-```xml
-<key>NSAppTransportSecurity</key>
-<dict>
-    <key>NSAllowsArbitraryLoads</key>
-    <true/>
-</dict>
-```
-
 ## Usage
 
 Here's a basic example of how to get started:
