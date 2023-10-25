@@ -41,36 +41,93 @@ Add a URL Type to your app. This URL Type is necessary for handling deep links r
 
 ## Usage
 
-Here's a basic example of how to get started:
+Here is a sample implementation:
+
+### AppDelegate
 
 ```swift
+import UIKit
 import ReefReferral
 
-// Configure ReefReferral with your API key and delegate
-let delegate = YourDelegate()
-reefReferral.start(apiKey: "<your_api_key>", delegate: delegate)
-
-// Generate a referral link
-if let referralLink = await reefReferral.generateReferralLink() {
-    // Handle the generated referral link
+@UIApplicationMain
+class AppDelegate: UIResponder, UIApplicationDelegate {
+    
+    var window: UIWindow?
+    
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    
+        // Initialize the ReefReferral SDK
+        ReefReferral.shared.start(apiKey: "your_api_key_here", delegate: self)
+                
+        return true
+    }
+    
+    func application(_ application: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+    
+        ReefReferral.shared.handleDeepLink(url: url)
+        
+        return true
+    }
 }
 
-// Check referral statuses
-let referralStatuses = await reefReferral.checkReferralStatuses()
-// Handle the retrieved referral statuses
-
-// Handle deep links (call this function when your app is opened via a deep link)
-func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
-    reefReferral.handleDeepLink(url: url)
-    return true
+extension AppDelegate: ReefReferralDelegate {
+    
+    // Implement ReefReferralDelegate methods
+    
+    func didReceiveReferralStatuses(_ statuses: [ReefReferralStatus]) {
+        // Handle referral statuses here
+    }
+    
+    func wasReferredSuccessfully() {
+        // Handle successful referral here
+        print("You were referred successfully!")
+    }
+    
+    func wasConvertedSuccessfully() {
+        // Handle successful conversion here
+        print("You were converted successfully!")
+    }
 }
-
-// Trigger a referral success event
-reefReferral.triggerReferralSuccess()
-
-// Developer Utilities
-reefReferral.clearLink()
-reefReferral.clearReferralID()
-
 ```
 
+### ViewController
+
+```swift
+import UIKit
+import ReefReferralSDK  // Replace with the actual module name
+
+class YourViewController: UIViewController {
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+    
+    // Example usage of generating a referral link
+    
+    func generateReferralLink() {
+        Task {
+            if let linkContent = await ReefReferral.shared.generateReferralLink() {
+                // Handle the generated referral link
+                print("Generated Referral Link: \(linkContent.link)")
+            } else {
+                // Handle the error case
+                print("Failed to generate referral link")
+            }
+        }
+    }
+    
+    // Example usage of checking referral statuses
+    
+    func checkReferralStatuses() {
+        ReefReferral.shared.checkReferralStatuses()
+    }
+    
+     // Example usage of triggering a referral success event
+    
+    func triggerReferralSuccess() {
+        ReefReferral.shared.triggerReferralSuccess()
+    }
+    
+}
+
+```
