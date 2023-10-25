@@ -46,28 +46,31 @@ Here's a basic example of how to get started:
 ```swift
 import ReefReferral
 
-// Initialize ReefReferral with your API key
-ReefReferral.shared.start(apiKey: "your-api-key") // For now use the App ID
-
-// -- Referring user functions
+// Configure ReefReferral with your API key and delegate
+let delegate = YourDelegate()
+reefReferral.start(apiKey: "<your_api_key>", delegate: delegate)
 
 // Generate a referral link
-if let referralLink = await ReefReferral.shared.generateReferralLink() {
-    print("Referral Link: \(referralLink.link)")
+if let referralLink = await reefReferral.generateReferralLink() {
+    // Handle the generated referral link
 }
 
 // Check referral statuses
-let referralStatuses = await ReefReferral.shared.checkReferralStatuses()
-print("Referral Statuses: \(referralStatuses)")
-print(\(statuses.filter({ $0.status == .received }).count) referrals opened")
-print(\(statuses.filter({ $0.status == .success }).count) referrals connverted")
+let referralStatuses = await reefReferral.checkReferralStatuses()
+// Handle the retrieved referral statuses
 
-// -- Referred user functions
+// Handle deep links (call this function when your app is opened via a deep link)
+func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+    reefReferral.handleDeepLink(url: url)
+    return true
+}
 
-// Handle deep links, to be called in the App openURL hook
-ReefReferral.shared.handleDeepLink(url: deepLinkURL)
+// Trigger a referral success event
+reefReferral.triggerReferralSuccess()
 
-// Trigger referral success
-ReefReferral.shared.triggerReferralSuccess()
+// Developer Utilities
+reefReferral.clearLink()
+reefReferral.clearReferralID()
+
 ```
 
