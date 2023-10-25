@@ -1,4 +1,5 @@
 import Foundation
+import Logging
 
 public protocol ReefReferralDelegate {
     func didReceiveReferralStatuses(_ statuses: [ReferralStatus])
@@ -10,6 +11,7 @@ public protocol ReefReferralDelegate {
 public class ReefReferral {
         
     public static let shared = ReefReferral()
+    public static var logger = Logger(label: "com.reef-referral.logger")
     
     public var data: ReefData {
         return reefData
@@ -18,7 +20,6 @@ public class ReefReferral {
     private var apiKey: String? // currently app-id, we'll need to do something more flexible
     private var delegate: ReefReferralDelegate?
     private var reefData: ReefData = ReefData.load()
-    
     
     // MARK: - Common
     
@@ -36,9 +37,9 @@ public class ReefReferral {
             let result = await ReefAPIClient.shared.send(testConnectionRequest)
             switch result {
             case .success(_):
-                print("ReefReferral properly configured")
+                ReefReferral.logger.info("ReefReferral properly configured")
             case .failure(let error):
-                print(error)
+                ReefReferral.logger.error("\(error.localizedDescription)")
             }
         }
     }
@@ -52,7 +53,7 @@ public class ReefReferral {
     public func generateReferralLink() async -> ReferralLinkContent? {
 
         guard let apiKey else {
-            print("Missing API key, did you forgot to initialize ReefReferal SDK ?")
+            ReefReferral.logger.error("Missing API key, did you forgot to initialize ReefReferal SDK ?")
             return nil
         }
         
@@ -68,7 +69,7 @@ public class ReefReferral {
             reefData.save()
             return result.link
         case .failure(let error):
-            print(error)
+            ReefReferral.logger.error("\(error.localizedDescription)")
             return nil
         }
     }
@@ -79,7 +80,7 @@ public class ReefReferral {
     public func checkReferralStatuses() {
 
         guard apiKey != nil else {
-            print("Missing API key, did you forgot to initialize ReefReferal SDK ?")
+            ReefReferral.logger.error("Missing API key, did you forgot to initialize ReefReferal SDK ?")
             return
         }
         
@@ -93,7 +94,7 @@ public class ReefReferral {
             case .success(let statuses):
                 delegate?.didReceiveReferralStatuses(statuses)
             case .failure(let error):
-                print(error)
+                ReefReferral.logger.error("\(error.localizedDescription)")
             }
         }
     }
@@ -105,7 +106,7 @@ public class ReefReferral {
     public func checkReferralStatuses() async -> [ReferralStatus]{
 
         guard apiKey != nil else {
-            print("Missing API key, did you forgot to initialize ReefReferal SDK ?")
+            ReefReferral.logger.error("Missing API key, did you forgot to initialize ReefReferal SDK ?")
             return []
         }
         
@@ -118,7 +119,7 @@ public class ReefReferral {
         case .success(let statuses):
             return statuses
         case .failure(let error):
-            print(error)
+            ReefReferral.logger.error("\(error.localizedDescription)")
             return []
         }
     }
@@ -132,12 +133,12 @@ public class ReefReferral {
     ///
     public func handleDeepLink(url: URL) {
         guard apiKey != nil else {
-            print("Missing API key, did you forget to initialize ReefReferral SDK?")
+            ReefReferral.logger.error("Missing API key, did you forget to initialize ReefReferral SDK?")
             return
         }
         
         if let referalId = reefData.referralId {
-            print("Referal already opened with referalID : \(referalId)")
+            ReefReferral.logger.debug("Referal already opened with referalID : \(referalId)")
             delegate?.wasReferredSuccessfully()
             return
         }
@@ -155,7 +156,7 @@ public class ReefReferral {
                     print(failure)
                 }
             } else {
-                print("Invalid URL")
+                ReefReferral.logger.error("Invalid URL scheme")
             }
         }
     }
@@ -168,11 +169,11 @@ public class ReefReferral {
     ///
     public func triggerReferralSuccess() {
         guard apiKey != nil else {
-            print("Missing API key, did you forgot to initialize ReefReferal SDK ?")
+            ReefReferral.logger.error("Missing API key, did you forgot to initialize ReefReferal SDK ?")
             return
         }
         guard let referralID = reefData.referralId else {
-            print("No referralID to send")
+            ReefReferral.logger.error("No referralID found")
             return
         }
         

@@ -22,7 +22,7 @@
 		<key>reef-referral-ios-Package.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>1</integer>
+			<integer>0</integer>
 		</dict>
 		<key>reef-referral-ios.xcscheme_^#shared#^_</key>
 		<dict>
@@ -43,6 +43,11 @@
 			<true/>
 		</dict>
 		<key>ReefReferral</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>reef-referral-ios</key>
 		<dict>
 			<key>primary</key>
 			<true/>

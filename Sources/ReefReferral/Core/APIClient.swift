@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Logging
 
 public typealias Parameters = [String: Any]
 
@@ -64,8 +65,8 @@ extension APIClient {
             debugString += "\n\(self.parameters(for: request) as NSDictionary)"
         }
         
-        print(debugString)
-        print(urlRequest.curlString)
+        ReefReferral.logger.debug("\(debugString)")
+        ReefReferral.logger.debug("\(urlRequest.curlString)")
 
         do {
             let (data, response) = try await URLSession.shared.data(for: urlRequest)
@@ -79,9 +80,9 @@ extension APIClient {
             let endTime = Date().timeIntervalSince1970
             let elapsedTime = endTime - startTime
             let elapsedTimeString = "\(Int(elapsedTime * 1000)) ms"
-            print("<--- /\(urlRequest.url!.lastPathComponent) [\(elapsedTimeString)]")
+            ReefReferral.logger.debug("<--- /\(urlRequest.url!.lastPathComponent) [\(elapsedTimeString)]")
             if !string.isEmpty {
-                print(string)
+                ReefReferral.logger.debug("\(string)")
             }
             
             return await self.decode(data, statusCode: httpResponse.statusCode, request: request)

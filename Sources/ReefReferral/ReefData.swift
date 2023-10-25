@@ -22,7 +22,7 @@ public struct ReefData: Codable {
             let data = try JSONEncoder().encode(self)
             try data.write(to: ReefData.fileURL)
         } catch {
-            print("Error saving data to file: \(error)")
+            ReefReferral.logger.error("Error saving data to file: \(error)")
         }
     }
 
@@ -31,7 +31,7 @@ public struct ReefData: Codable {
             let data = try Data(contentsOf: ReefData.fileURL)
             return try JSONDecoder().decode(ReefData.self, from: data)
         } catch {
-            print("No previous data, creating")
+            ReefReferral.logger.debug("No previous data, creating")
             return ReefData()
         }
     }
