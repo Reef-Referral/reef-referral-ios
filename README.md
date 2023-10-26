@@ -74,7 +74,7 @@ extension AppDelegate: ReefReferralDelegate {
     
     // Implement ReefReferralDelegate methods
     
-    func didReceiveReferralStatuses(_ statuses: [ReefReferralStatus]) {
+    func didReceiveReferralStatuses(_ statuses: [ReferralStatus]) {
         // Handle referral statuses here
     }
     
