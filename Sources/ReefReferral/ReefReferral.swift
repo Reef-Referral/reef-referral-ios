@@ -143,11 +143,17 @@ public class ReefReferral {
             return
         }
         
+        guard url != reefData.referralLink?.linkURL else {
+            ReefReferral.logger.error("Cannot use own promo-code")
+            return
+        }
+        
         if let referalId = reefData.referralId {
             ReefReferral.logger.debug("Referal already opened with referalID : \(referalId)")
             delegate?.wasReferredSuccessfully()
             return
         }
+        
         Task {
             // Extract the link_id from the URL
             if let linkId = url.absoluteString.components(separatedBy: "://").last {
