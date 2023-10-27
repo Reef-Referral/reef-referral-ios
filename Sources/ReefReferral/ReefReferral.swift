@@ -98,7 +98,9 @@ public class ReefReferral {
             
             switch response {
             case .success(let statuses):
-                delegate?.didReceiveReferralStatuses(statuses)
+                DispatchQueue.main.async {
+                    self.delegate?.didReceiveReferralStatuses(statuses)
+                }
             case .failure(let error):
                 ReefReferral.logger.error("\(error.localizedDescription)")
             }
@@ -150,7 +152,6 @@ public class ReefReferral {
         
         if let referalId = reefData.referralId {
             ReefReferral.logger.debug("Referal already opened with referalID : \(referalId)")
-            delegate?.wasReferredSuccessfully()
             return
         }
         
@@ -163,7 +164,9 @@ public class ReefReferral {
                 case .success(let result):
                     reefData.referralId = result.referral.id
                     reefData.save()
-                    delegate?.wasReferredSuccessfully()
+                    DispatchQueue.main.async {
+                        self.delegate?.wasReferredSuccessfully()
+                    }
                 case .failure(let failure):
                     print(failure)
                 }
@@ -192,7 +195,9 @@ public class ReefReferral {
         Task {
             let request = NotifyReferralSuccessRequest(referral_id: referralID)
             _ = await ReefAPIClient.shared.send(request)
-            delegate?.wasConvertedSuccessfully()
+            DispatchQueue.main.async {
+                self.delegate?.wasConvertedSuccessfully()
+            }
         }
     }
     
