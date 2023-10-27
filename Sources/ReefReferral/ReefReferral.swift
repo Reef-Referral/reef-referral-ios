@@ -7,6 +7,12 @@ public protocol ReefReferralDelegate {
     func wasConvertedSuccessfully()
 }
 
+extension ReefReferralDelegate {
+    func didReceiveReferralStatuses(_ statuses: [ReferralStatus]) {}
+    func wasReferredSuccessfully()  {}
+    func wasConvertedSuccessfully()  {}
+}
+
 /// ReefReferral SDK main class
 public class ReefReferral {
         
@@ -28,7 +34,7 @@ public class ReefReferral {
     /// - Parameters:
     ///   - apiKey: The API key to be used for configuration.
     ///
-    public func start(apiKey: String, delegate: ReefReferralDelegate) {
+    public func start(apiKey: String, delegate: ReefReferralDelegate?) {
         self.apiKey = apiKey
         self.delegate = delegate
         

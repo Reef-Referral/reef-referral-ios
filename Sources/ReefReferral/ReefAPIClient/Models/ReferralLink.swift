@@ -16,7 +16,7 @@ public struct ReferralLinkContent: Codable {
     public let app_id: String
     public let link_url: String
     
-    public var link: URL? {
-        return URL(string: link_url)
+    public var linkURL: URL {
+        return URL(string: link_url)!
     }
 }
