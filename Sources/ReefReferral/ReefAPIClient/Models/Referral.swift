@@ -13,7 +13,7 @@ public struct Referral: Codable {
 
 public struct ReferralContent: Codable {
     public let id: String
-    public let status: ReferralStatus.Status
+    public let referred_status: ReferredStatus
     public let udid: String
     public let link_id: String
 }

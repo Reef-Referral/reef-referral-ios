@@ -7,13 +7,22 @@
 
 import Foundation
 
+public enum ReferredStatus: String, Codable {
+    case received
+    case success
+}
+
 public struct ReferralStatus: Decodable {
-    public enum Status: String, Codable {
-        case received
-        case success
-    }
-    
-    public let referral_id: String
+    public let referral_status: ReferralStatusContent
+}
+
+public struct ReferralStatusContent: Decodable {
+    public let link: ReferralLinkContent
+    public let referred_users: [ReferredUser]
+}
+
+public struct ReferredUser: Decodable {
+    public let id: String
     public let udid: String
-    public let status: Status
+    public let referred_status: ReferredStatus
 }

@@ -17,6 +17,9 @@ public struct ReefData: Codable {
     public var referralId: String?
     public var referralLink: ReferralLinkContent?
     
+    public var referralCouponId: String?
+    public var referringCouponId: String?
+    
     func save() {
         do {
             let data = try JSONEncoder().encode(self)

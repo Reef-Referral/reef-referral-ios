@@ -8,11 +8,11 @@
 import Foundation
 
 public struct ReferralStatusesRequest: APIRequest {
-    public typealias Response = [ReferralStatus]
+    public typealias Response = ReferralStatus
     
     var link_id: String
     public var resourceName: String {
-        return "check_referral_statuses"
+        return "check_referral_status"
     }
     
     public var httpMethod: HTTPMethod {
