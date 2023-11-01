@@ -1,133 +1,78 @@
-# ReefReferralSDK
-
-[![Swift Version](https://img.shields.io/badge/Swift-5.5-orange.svg)](https://swift.org)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Platform](https://img.shields.io/badge/Platform-iOS-lightgrey.svg)](https://developer.apple.com/swift/)
+# ReefReferral iOS SDK
 
 ## Overview
 
-The ReefReferral SDK is a tool for iOS app developers to easily integrate referral functionality into their applications. With a simple setup, developers can enable users to refer friends and earn rewards.
+The ReefReferral SDK allows you to implement a referral system in your app, enabling users to refer others and earn rewards. This guide will help you integrate the SDK quickly and efficiently.
 
+## Prerequisites
 
-## Requirements
+Before you begin, make sure you have the following:
 
-- Swift 5.5+
-- iOS 14.0+
+- Xcode installed.
+- Your API key ready for configuration.
 
-## Installation
+## Standard Mode (With Apple Offer Codes)
 
-### Swift Package Manager
+In standard mode, the ReefReferral SDK automatically handles referral success events. You don't need to call `triggerReferralSuccess` or `triggerReferringSuccess`.
 
-You can use the [Swift Package Manager](https://swift.org/package-manager/) to install `ReefReferral` by adding it to your `Package.swift`:
+### 1. Import the SDK
 
-```swift
-dependencies: [
-    .package(url: "https://github.com/ReefReferral/ReefReferralSDK.git", branch: "main")
-]
-```
-
-## Configuration
-
-To use the ReefReferral package effectively, you need to make additional configurations in your project.
-
-### Adding URL Type
-
-Add a URL Type to your app. This URL Type is necessary for handling deep links related to referrals. Follow these steps to add a URL Type:
-
-1. In Xcode, open your project settings
-2. Navigate to the "Info" > "URL Types" section
-3. Click the "+" button to add a new URL Type
-4. Set the URL Scheme to "reef-referal"
-
-## Usage
-
-Here is a sample implementation:
-
-### AppDelegate
+Add the ReefReferral SDK to your project by importing it at the top of your Swift file:
 
 ```swift
-import UIKit
 import ReefReferral
-
-@UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
-    
-    var window: UIWindow?
-    
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-    
-        // Initialize the ReefReferral SDK
-        ReefReferral.shared.start(apiKey: "your_api_key_here", delegate: self)
-                
-        return true
-    }
-    
-    func application(_ application: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
-    
-        ReefReferral.shared.handleDeepLink(url: url)
-        
-        return true
-    }
-}
-
-extension AppDelegate: ReefReferralDelegate {
-    
-    // Implement ReefReferralDelegate methods
-    
-    func didReceiveReferralStatuses(_ statuses: [ReferralStatus]) {
-        // Handle referral statuses here
-    }
-    
-    func wasReferredSuccessfully() {
-        // Handle successful referral here
-        print("You were referred successfully!")
-    }
-    
-    func wasConvertedSuccessfully() {
-        // Handle successful conversion here
-        print("You were converted successfully!")
-    }
-}
 ```
 
-### ViewController
+### 2. Configure the SDK
+Initialize the ReefReferral SDK with your API key and set a delegate to handle referral events:
 
 ```swift
-import UIKit
-import ReefReferralSDK  // Replace with the actual module name
-
-class YourViewController: UIViewController {
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-    }
-    
-    // Example usage of generating a referral link
-    
-    func generateReferralLink() {
-        Task {
-            if let linkContent = await ReefReferral.shared.generateReferralLink() {
-                // Handle the generated referral link
-                print("Generated Referral Link: \(linkContent.link)")
-            } else {
-                // Handle the error case
-                print("Failed to generate referral link")
-            }
-        }
-    }
-    
-    // Example usage of checking referral statuses
-    
-    func checkReferralStatuses() {
-        ReefReferral.shared.checkReferralStatuses()
-    }
-    
-     // Example usage of triggering a referral success event
-    
-    func triggerReferralSuccess() {
-        ReefReferral.shared.triggerReferralSuccess()
-    }
-    
-}
-
+let apiKey = "YOUR_API_KEY"
+ReefReferral.shared.start(apiKey: apiKey, delegate: self)
 ```
+
+### 3. Generate a Referral Link
+To generate a referral link, use the following method:
+
+```swift
+if let referralLink = await ReefReferral.shared.generateReferralLink() {
+    // Use the generated referralLink
+}
+```
+### 4. Check Referral Status
+You can check referral statuses for a specific referral link:
+
+```swift
+ReefReferral.shared.checkReferralStatus()
+Your delegate methods will be called automatically when referral events occur.
+```
+
+## Manual Mode (Without Apple Offer Codes)
+In manual mode, you need to trigger referral success events manually.
+
+### 1. Import and Configure the SDK
+Follow steps 1 and 2 from the standard mode to import and configure the SDK.
+
+### 2. Generate a Referral Link
+Generate a referral link as explained in step 3 from the standard mode.
+
+### 3. Trigger Referral Success
+To manually trigger a referral success event, use the following method:
+
+```swift
+ReefReferral.shared.triggerReferralSuccess()
+```
+
+#### 4. Trigger Referring Success
+To manually trigger a referring success event, use the following method:
+
+```swift
+ReefReferral.shared.triggerReferringSuccess()
+```
+
+## Support
+
+If you have any questions or need further assistance, refer to the SDK documentation or contact our support team.
+
+Happy Referring! 🎉
+
