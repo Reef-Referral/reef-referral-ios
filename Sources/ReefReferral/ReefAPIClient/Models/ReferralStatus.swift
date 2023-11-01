@@ -13,10 +13,6 @@ public enum ReferredStatus: String, Codable {
 }
 
 public struct ReferralStatus: Decodable {
-    public let referral_status: ReferralStatusContent
-}
-
-public struct ReferralStatusContent: Decodable {
     public let link: ReferralLinkContent
     public let referred_users: [ReferredUser]
 }

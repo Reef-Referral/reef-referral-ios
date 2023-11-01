@@ -1,9 +1,7 @@
 //
 //  APIClient.swift
-//  ambassador
 //
 //  Created by Alexis Creuzot on 26/02/2021.
-//  Copyright © 2021 waverlylabs. All rights reserved.
 //
 
 import Foundation
@@ -72,10 +70,6 @@ extension APIClient {
             let (data, response) = try await URLSession.shared.data(for: urlRequest)
             let string = try data.toJSON([JSONSerialization.WritingOptions.prettyPrinted])
             
-            guard let httpResponse = response as? HTTPURLResponse else {
-                return .failure(RequestError.decode)
-            }
-            
             // Calculate elapsed time after receiving the response
             let endTime = Date().timeIntervalSince1970
             let elapsedTime = endTime - startTime
@@ -83,6 +77,10 @@ extension APIClient {
             ReefReferral.logger.debug("<--- /\(urlRequest.url!.lastPathComponent) [\(elapsedTimeString)]")
             if !string.isEmpty {
                 ReefReferral.logger.debug("\(string)")
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                return .failure(RequestError.decode)
             }
             
             return await self.decode(data, statusCode: httpResponse.statusCode, request: request)

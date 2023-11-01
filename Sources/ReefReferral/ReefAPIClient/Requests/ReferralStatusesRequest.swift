@@ -7,10 +7,11 @@
 
 import Foundation
 
-public struct ReferralStatusesRequest: APIRequest {
+public struct ReferralStatusRequest: APIRequest {
     public typealias Response = ReferralStatus
     
     var link_id: String
+    
     public var resourceName: String {
         return "check_referral_status"
     }

@@ -49,7 +49,7 @@ public class ReefReferral {
                 ReefReferral.logger.info("ReefReferral properly configured")
                 self.couponHandler.checkForCouponRedemption(identifier: "test")
             case .failure(let error):
-                ReefReferral.logger.error("\(error.localizedDescription)")
+                ReefReferral.logger.error("\(error)")
             }
         }
     }
@@ -71,7 +71,7 @@ public class ReefReferral {
             return link
         }
         
-        let request = ReferralLinkRequest(app_id: apiKey)
+        let request = GenerateReferralLinkRequest(app_id: apiKey, udid: reefData.udid)
         let response = await ReefAPIClient.shared.send(request)
         switch response {
         case .success(let result):
@@ -79,7 +79,7 @@ public class ReefReferral {
             reefData.save()
             return result.link
         case .failure(let error):
-            ReefReferral.logger.error("\(error.localizedDescription)")
+            ReefReferral.logger.error("\(error)")
             return nil
         }
     }
@@ -97,21 +97,21 @@ public class ReefReferral {
         guard let link = reefData.referralLink else { return }
         
         Task {
-            let statusesRequest = ReferralStatusesRequest(link_id: link.id)
+            let statusesRequest = ReferralStatusRequest(link_id: link.id)
             let response = await ReefAPIClient.shared.send(statusesRequest)
             
             switch response {
-            case .success(let result):
+            case .success(let referral_status):
                 DispatchQueue.main.async {
-                    let nbReceived = result.referral_status.referred_users.filter { $0.referred_status == .received }.count
-                    let nbSuccess = result.referral_status.referred_users.filter { $0.referred_status == .success }.count
-                    let status = result.referral_status.link.reward_status
+                    let nbReceived = referral_status.referred_users.filter { $0.referred_status == .received }.count
+                    let nbSuccess = referral_status.referred_users.filter { $0.referred_status == .success }.count
+                    let status = referral_status.link.reward_status
                     self.delegate?.didReceiveReferralStatus(referralReceived: nbReceived,
                                                             referralSuccess: nbSuccess,
                                                             rewardEligibility: status)
                 }
             case .failure(let error):
-                ReefReferral.logger.error("\(error.localizedDescription)")
+                ReefReferral.logger.error("\(error)")
             }
         }
     }
@@ -152,7 +152,7 @@ public class ReefReferral {
                         self.delegate?.referredUserDidReceiveReferral()
                     }
                 case .failure(let error):
-                    ReefReferral.logger.error("\(error.localizedDescription)")
+                    ReefReferral.logger.error("\(error)")
                 }
             } else {
                 ReefReferral.logger.error("Invalid URL scheme")
@@ -185,7 +185,7 @@ public class ReefReferral {
                     self.delegate?.referredUserDidClaimReferral()
                 }
             case .failure(let error):
-                ReefReferral.logger.error("\(error.localizedDescription)")
+                ReefReferral.logger.error("\(error)")
             }
         }
     }
@@ -213,7 +213,7 @@ public class ReefReferral {
                     self.delegate?.referringUserDidClaimReward()
                 }
             case .failure(let error):
-                ReefReferral.logger.error("\(error.localizedDescription)")
+                ReefReferral.logger.error("\(error)")
             }
         }
     }
