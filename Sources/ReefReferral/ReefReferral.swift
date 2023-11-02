@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import Logging
 
 public protocol ReefReferralDelegate {
@@ -10,9 +11,30 @@ public protocol ReefReferralDelegate {
 
 extension ReefReferralDelegate {
     func didReceiveReferralStatus(referralReceived: Int, referralSuccess: Int, rewardEligibility: RewardStatus) {}
-    func referredUserDidReceiveReferral() {}
-    func referredUserDidClaimReferral() {}
-    func referringUserDidClaimReward() {}
+    public func referredUserDidReceiveReferral() {}
+    public func referredUserDidClaimReferral() {}
+    public func referringUserDidClaimReward() {}
+}
+
+public class ReefReferralObservable: ObservableObject {
+    
+    @Published public var referralLink: ReferralLinkContent? = ReefReferral.shared.data.referralLink
+    @Published public var referralID: String? = ReefReferral.shared.data.referralId
+    @Published public var referralStatus: (received: Int, success: Int, eligibility: RewardStatus) = (0, 0, .not_eligible)
+    
+    private var reefReferral: ReefReferral
+
+    public init(reefReferral: ReefReferral) {
+        self.reefReferral = reefReferral
+        self.reefReferral.delegate = self
+        self.reefReferral.observable = self
+    }
+}
+
+extension ReefReferralObservable: ReefReferralDelegate {
+    public func didReceiveReferralStatus(referralReceived: Int, referralSuccess: Int, rewardEligibility: RewardStatus) {
+        referralStatus = (referralReceived, referralSuccess, rewardEligibility)
+    }
 }
 
 /// ReefReferral SDK main class
@@ -20,14 +42,14 @@ public class ReefReferral {
         
     public static let shared = ReefReferral()
     public static var logger = Logger(label: "com.reef-referral.logger")
-    
+    public var delegate: ReefReferralDelegate?
+    public var observable: ReefReferralObservable?
     public var data: ReefData {
         return reefData
     }
     
     private var couponHandler = CouponRedemptionDetector()
     private var apiKey: String? // currently app-id, we'll need to do something more flexible
-    private var delegate: ReefReferralDelegate?
     private var reefData: ReefData = ReefData.load()
     
     // MARK: - Common
@@ -37,7 +59,7 @@ public class ReefReferral {
     /// - Parameters:
     ///   - apiKey: The API key to be used for configuration.
     ///
-    public func start(apiKey: String, delegate: ReefReferralDelegate?) {
+    public func start(apiKey: String, delegate: ReefReferralDelegate? = nil) {
         self.apiKey = apiKey
         self.delegate = delegate
         
@@ -224,13 +246,16 @@ public class ReefReferral {
     ///
     public func clearLink() {
         reefData.referralLink = nil
+        observable?.referralLink = nil
         reefData.save()
+        
     }
     
     /// Clears link in case we want to create a new one
     ///
     public func clearReferralID() {
         reefData.referralId = nil
+        observable?.referralID = nil
         reefData.save()
     }
 }

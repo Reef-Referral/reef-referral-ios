@@ -16,7 +16,6 @@ public struct ReefData: Codable {
     var udid: String = UUID().uuidString
     public var referralId: String?
     public var referralLink: ReferralLinkContent?
-    
     public var referralCouponId: String?
     public var referringCouponId: String?
     
