@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import Logging
+import UIKit
 
 public protocol ReefReferralDelegate {
     func didReceiveReferralStatus(referralReceived: Int, referralSuccess: Int, rewardEligibility: RewardStatus)
@@ -63,6 +64,13 @@ public class ReefReferral {
         self.apiKey = apiKey
         self.delegate = delegate
         
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(checkReferralStatus),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
+        
         Task {
             let testConnectionRequest = ReferralTestConnectionRequest(app_id: apiKey)
             let result = await ReefAPIClient.shared.send(testConnectionRequest)
@@ -99,6 +107,7 @@ public class ReefReferral {
         case .success(let result):
             reefData.referralLink = result.link
             reefData.save()
+            self.checkReferralStatus()
             return result.link
         case .failure(let error):
             ReefReferral.logger.error("\(error)")
@@ -109,14 +118,16 @@ public class ReefReferral {
     
     /// Asynchronously checks referral statuses for a specific referral link.
     ///
-    public func checkReferralStatus() {
+    @objc public func checkReferralStatus() {
 
         guard apiKey != nil else {
             ReefReferral.logger.error("Missing API key, did you forgot to initialize ReefReferal SDK ?")
             return
         }
         
-        guard let link = reefData.referralLink else { return }
+        guard let link = reefData.referralLink else {
+            return
+        }
         
         Task {
             let statusesRequest = ReferralStatusRequest(link_id: link.id)
@@ -248,7 +259,7 @@ public class ReefReferral {
         reefData.referralLink = nil
         observable?.referralLink = nil
         reefData.save()
-        
+        self.delegate?.didReceiveReferralStatus(referralReceived: 0, referralSuccess: 0, rewardEligibility: .not_eligible)
     }
     
     /// Clears link in case we want to create a new one
