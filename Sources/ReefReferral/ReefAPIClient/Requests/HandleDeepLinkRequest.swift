@@ -8,7 +8,7 @@
 import Foundation
 
 struct HandleDeepLinkRequest: APIRequest {
-    typealias Response = Referral
+    typealias Response = ReferredUser
 
     let link_id: String
     let udid: String

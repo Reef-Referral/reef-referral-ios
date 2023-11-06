@@ -4,14 +4,14 @@ import Logging
 import UIKit
 
 public protocol ReefReferralDelegate {
-    func didReceiveReferralStatus(referralReceived: Int, referralSuccess: Int, rewardEligibility: RewardStatus)
+    func didReceiveReferralStatus(referralReceived: Int, referralSuccess: Int, rewardEligibility: ReferringRewardStatus)
     func referredUserDidReceiveReferral()
     func referredUserDidClaimReferral()
     func referringUserDidClaimReward()
 }
 
 extension ReefReferralDelegate {
-    func didReceiveReferralStatus(referralReceived: Int, referralSuccess: Int, rewardEligibility: RewardStatus) {}
+    func didReceiveReferralStatus(referralReceived: Int, referralSuccess: Int, rewardEligibility: ReferringRewardStatus) {}
     public func referredUserDidReceiveReferral() {}
     public func referredUserDidClaimReferral() {}
     public func referringUserDidClaimReward() {}
@@ -20,9 +20,11 @@ extension ReefReferralDelegate {
 public class ReefReferralObservable: ObservableObject {
     
     @Published public var referralLinkURL: URL? = ReefReferral.shared.data.referralInfo?.link.linkURL
-    @Published public var referredId: String? = ReefReferral.shared.data.referredId
-    @Published public var referralStatus: (received: Int, success: Int, eligibility: RewardStatus) = (0, 0, .not_eligible)
+    @Published public var referralStatus: (received: Int, success: Int, eligibility: ReferringRewardStatus) = (0, 0, .not_eligible)
+    @Published public var wasReferred: Bool = (ReefReferral.shared.data.referredId != nil)
+    @Published public var hasClaimedReferralReward: String? = ReefReferral.shared.data.referredId
     
+
     private var reefReferral: ReefReferral
 
     public init(reefReferral: ReefReferral) {
@@ -33,19 +35,19 @@ public class ReefReferralObservable: ObservableObject {
 }
 
 extension ReefReferralObservable: ReefReferralDelegate {
-    public func didReceiveReferralStatus(referralReceived: Int, referralSuccess: Int, rewardEligibility: RewardStatus) {
+    public func didReceiveReferralStatus(referralReceived: Int, referralSuccess: Int, rewardEligibility: ReferringRewardStatus) {
         referralStatus = (referralReceived, referralSuccess, rewardEligibility)
     }
 }
-
+ 
 /// ReefReferral SDK main class
 public class ReefReferral {
-        
+    
     public static let shared = ReefReferral()
     public static var logger = Logger(label: "com.reef-referral.logger")
     public var delegate: ReefReferralDelegate?
     public var observable: ReefReferralObservable?
-    public var data: ReefData {
+    public  var data: ReefData {
         return reefData
     }
     
@@ -180,9 +182,10 @@ public class ReefReferral {
             let response = await ReefAPIClient.shared.send(request)
             switch response {
             case .success(let result):
-                reefData.referredId = result.referral.id
+                reefData.referredId = result.id
                 reefData.save()
                 DispatchQueue.main.async {
+                    self.observable?.wasReferred = true
                     self.delegate?.referredUserDidReceiveReferral()
                 }
             case .failure(let error):
@@ -230,7 +233,7 @@ public class ReefReferral {
         reefData.referralInfo = nil
         observable?.referralLinkURL = nil
         reefData.referredId = nil
-        observable?.referredId = nil
+        observable?.wasReferred = false
         reefData.save()
         self.delegate?.didReceiveReferralStatus(referralReceived: 0, referralSuccess: 0, rewardEligibility: .not_eligible)
     }

@@ -7,6 +7,8 @@
 
 import Foundation
 
+
+
 public struct ReefData: Codable {
     
     static let fileURL = FileManager.default
@@ -15,16 +17,12 @@ public struct ReefData: Codable {
     
     var udid: String = UUID().uuidString
     
-    // Referring infos
     public var referralInfo: ReferralStatus?
-    
-    // Referred ID
     public var referredId: String?
     
     public var wasReferred : Bool {
         return referredId != nil
     }
-    
     
     func save() {
         do {
