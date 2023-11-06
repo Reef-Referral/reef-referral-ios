@@ -15,9 +15,8 @@ internal class CouponRedemptionDetector: NSObject, SKPaymentTransactionObserver 
         SKPaymentQueue.default().add(self)
     }
 
-    func checkForCouponRedemption(identifier: String) {
-        let productIdentifiers: Set<String> = [identifier]
-        let productsRequest = SKProductsRequest(productIdentifiers: productIdentifiers)
+    func checkForCouponRedemption(productIdentifiers: [String]) {
+        let productsRequest = SKProductsRequest(productIdentifiers: Set(productIdentifiers))
         productsRequest.start()
     }
     
@@ -27,9 +26,9 @@ internal class CouponRedemptionDetector: NSObject, SKPaymentTransactionObserver 
             case .purchased:
                 let productIdentifier = transaction.payment.productIdentifier
                 switch productIdentifier {
-                case ReefReferral.shared.data.referralCouponId:
+                case ReefReferral.shared.data.referralInfo?.offer.referral_offer_code:
                     ReefReferral.shared.triggerReferralSuccess()
-                case ReefReferral.shared.data.referringCouponId:
+                case ReefReferral.shared.data.referralInfo?.offer.referring_offer_code:
                     ReefReferral.shared.triggerReferringSuccess()
                 default:
                     ReefReferral.logger.debug("Unknown productIdentifier \(productIdentifier), ignoring")

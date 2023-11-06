@@ -14,10 +14,17 @@ public struct ReefData: Codable {
                         .appendingPathComponent("reef_data.json")
     
     var udid: String = UUID().uuidString
-    public var referralId: String?
-    public var referralLink: ReferralLinkContent?
-    public var referralCouponId: String?
-    public var referringCouponId: String?
+    
+    // Referring infos
+    public var referralInfo: ReferralStatus?
+    
+    // Referred ID
+    public var referredId: String?
+    
+    public var wasReferred : Bool {
+        return referredId != nil
+    }
+    
     
     func save() {
         do {

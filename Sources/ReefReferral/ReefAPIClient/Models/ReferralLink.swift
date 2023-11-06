@@ -24,6 +24,7 @@ public struct ReferralLinkContent: Codable {
     public let reward_status: RewardStatus
     public let link_url: String
     public let ios_scheme: String
+    public let reward_offer_code : String?
     
     public var linkURL: URL {
         return URL(string: link_url)!
