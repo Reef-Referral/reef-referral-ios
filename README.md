@@ -13,7 +13,7 @@ Before you begin, make sure you have the following:
 
 ## Standard Mode (With Apple Offer Codes)
 
-In standard mode, the ReefReferral SDK automatically handles referral success events. You don't need to call `triggerReferralSuccess` or `triggerReferringSuccess`.
+In standard mode, the ReefReferral SDK automatically handles referral and referring success events. You don't need to call `triggerReferralSuccess` or `triggerReferringSuccess`.
 
 ### 1. Import the SDK
 
@@ -26,44 +26,64 @@ import ReefReferral
 ### 2. Configure the SDK
 Initialize the ReefReferral SDK with your API key and set a delegate to handle referral events:
 
+#### SwiftUI example
 ```swift
-let apiKey = "YOUR_API_KEY"
-ReefReferral.shared.start(apiKey: apiKey, delegate: self)
-```
-
-### 3. Generate a Referral Link
-To generate a referral link, use the following method:
-
-```swift
-if let referralLink = await ReefReferral.shared.generateReferralLink() {
-    // Use the generated referralLink
+struct ContentView: View {
+    @ObservedObject private var reef = ReefReferral.shared
+    var body: some View {
+        NavigationView {
+            MyView {
+                ...
+            }
+            .onAppear {
+                reef.start(apiKey: API_KEY, logLevel: .trace)
+            }
+            .onOpenURL { url in
+                reef.handleDeepLink(url: url)
+            }
+        }
+    }
 }
 ```
-### 4. Check Referral Status
-You can check referral statuses for a specific referral link:
+
+### 3. Accessing referral information
+
+in Swift UI, you can simply observe `ReefReferral.shared`
+```swift
+@ObservedObject private var reef = ReefReferral.shared
+```
+
+ReefReferral.shared offers referral-related information using the following properties:
+
+- `referringLinkURL`: The URL of the referring user's referral link.
+- `receivedCount`: The number of referrals received by the referring user.
+- `successCount`: The number of successful referrals made by the referring user.
+- `rewardEligibility`: The eligibility status for the referring user's reward.
+- `rewardURL`: The URL to claim the referring user's reward.
+- `referredStatus`: The status of the referred user.
+- `referredOfferURL`: The URL to claim the referred user's offer.
+
+You can also implement the delegate protocol to get updates on those properties :
 
 ```swift
-ReefReferral.shared.checkReferralStatus()
-Your delegate methods will be called automatically when referral events occur.
-```
+public protocol ReefReferralDelegate {
+    func referringUpdate(linkURL: URL?, received: Int, successes: Int, rewardEligibility: ReferringRewardStatus, rewardURL: URL?)
+    func referredUpdate(status: ReferredStatus, offerURL: URL?)
+}
+``` 
 
 ## Manual Mode (Without Apple Offer Codes)
 In manual mode, you need to trigger referral success events manually.
 
-### 1. Import and Configure the SDK
-Follow steps 1 and 2 from the standard mode to import and configure the SDK.
 
-### 2. Generate a Referral Link
-Generate a referral link as explained in step 3 from the standard mode.
-
-### 3. Trigger Referral Success
+### Trigger Referral Success
 To manually trigger a referral success event, use the following method:
 
 ```swift
 ReefReferral.shared.triggerReferralSuccess()
 ```
 
-#### 4. Trigger Referring Success
+### Trigger Referring Success
 To manually trigger a referring success event, use the following method:
 
 ```swift
@@ -73,6 +93,4 @@ ReefReferral.shared.triggerReferringSuccess()
 ## Support
 
 If you have any questions or need further assistance, refer to the SDK documentation or contact our support team.
-
-Happy Referring! 🎉
 

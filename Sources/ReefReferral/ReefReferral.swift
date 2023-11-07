@@ -9,11 +9,11 @@ public protocol ReefReferralDelegate {
 }
 
 extension ReefReferralDelegate {
-    public func referringUpdate(linkURL: URL?, received: Int, successes: Int, rewardEligibility: ReferringRewardStatus, rewardURL: URL?) {}
-    public func referredUpdate(status: ReferredStatus, offerURL: URL?) {}
+    func referringUpdate(linkURL: URL?, received: Int, successes: Int, rewardEligibility: ReferringRewardStatus, rewardURL: URL?) {}
+    func referredUpdate(status: ReferredStatus, offerURL: URL?) {}
 }
 
-public class ReefReferral {
+public class ReefReferral: ObservableObject {
     public static let shared = ReefReferral()
     public static var logger = Logger(label: "com.reef-referral.logger")
     public var delegate: ReefReferralDelegate?
@@ -22,21 +22,43 @@ public class ReefReferral {
     private var apiKey: String?
     private var data: ReefData = ReefData.load()
     
-    public var referringLinkURL: URL? { data.referringInfo?.link.linkURL }
-    public var referringReceivedCount: Int { data.referringInfo?.received ?? 0 }
-    public var referringSuccessCount: Int { data.referringInfo?.successes ?? 0 }
-    public var referringRewardEligibility: ReferringRewardStatus { data.referringInfo?.link.reward_status ?? .not_eligible }
-    public var referringRewardURL: URL? { data.referringInfo?.link.rewardURL }
-    public var referredStatus: ReferredStatus { data.referredInfo?.referred_user.referred_status ?? .none }
-    public var referredOfferURL: URL? { data.referredInfo?.referred_user.appleOfferURL }
+    @Published public var referringLinkURL: URL? = nil
+    @Published public var receivedCount: Int = 0
+    @Published public var successCount: Int = 0
+    @Published public var rewardEligibility: ReferringRewardStatus = .not_eligible
+    @Published public var rewardURL: URL? = nil
+    @Published public var referredStatus: ReferredStatus = .none
+    @Published public var referredOfferURL: URL? = nil
     
+    init() {
+        updateReferringInfos()
+        updateReferredInfos()
+    }
+    
+    private func updateReferringInfos() {
+        let referringInfo = data.referringInfo
+        referringLinkURL = referringInfo?.link.linkURL
+        receivedCount = referringInfo?.received ?? 0
+        successCount = referringInfo?.successes ?? 0
+        rewardEligibility = referringInfo?.link.reward_status ?? .not_eligible
+        rewardURL = referringInfo?.link.rewardURL
+        delegate?.referringUpdate(
+            linkURL: referringLinkURL,
+            received: receivedCount,
+            successes: successCount,
+            rewardEligibility: rewardEligibility,
+            rewardURL: rewardURL
+        )
+    }
+    
+    private func updateReferredInfos() {
+        let referredInfo = data.referredInfo
+        referredStatus = referredInfo?.referred_user.referred_status ?? .none
+        referredOfferURL = referredInfo?.referred_user.appleOfferURL
+    }
+
     // MARK: - Common
     
-    /// Asynchronously starts the ReefReferral configuration with the given API key.
-    ///
-    /// - Parameters:
-    ///   - apiKey: The API key to be used for configuration.
-    ///
     public func start(apiKey: String, delegate: ReefReferralDelegate? = nil, logLevel: Logger.Level) {
         self.apiKey = apiKey
         self.delegate = delegate
@@ -50,33 +72,26 @@ public class ReefReferral {
         )
     }
     
-    /// Check status of referral for the current user
-    ///
     @objc public func status() {
-        
-        guard let apiKey else {
+        guard let apiKey = apiKey else {
             ReefReferral.logger.error("Missing API key, did you forget to initialize ReefReferral SDK?")
             return
         }
         
         Task {
-            let testConnectionRequest = StatusRequest(udid: self.data.udid, app_id: apiKey)
+            let testConnectionRequest = StatusRequest(udid: data.udid, app_id: apiKey)
             let result = await ReefAPIClient.shared.send(testConnectionRequest)
             switch result {
-            case .success(let referralInfo):
-                self.data.referringInfo = referralInfo
-                self.data.save()
-
-                self.couponHandler.referredOfferCode = referralInfo.offer.referral_offer_code
-                self.couponHandler.referredOfferCode = referralInfo.offer.referring_offer_code
-                self.couponHandler.checkForCouponRedemption()
+            case .success(let infos):
+                data.referringInfo = infos
+                data.save()
+                
+                couponHandler.referredOfferCode = infos.offer.referral_offer_code
+                couponHandler.referredOfferCode = infos.offer.referring_offer_code
+                couponHandler.checkForCouponRedemption()
                 
                 DispatchQueue.main.async {
-                    self.delegate?.referringUpdate(linkURL: referralInfo.link.linkURL,
-                                                   received: referralInfo.received,
-                                                   successes: referralInfo.successes,
-                                                    rewardEligibility: referralInfo.link.reward_status,
-                                                    rewardURL: referralInfo.link.rewardURL)
+                    self.updateReferringInfos()
                 }
             case .failure(let error):
                 ReefReferral.logger.error("\(error)")
@@ -84,13 +99,9 @@ public class ReefReferral {
         }
     }
     
-    /// Asynchronously triggers a referral success event with the given referralID parameter.
-    /// This get automatically triggered if the developer has properly added an Apple Coupon Code for Referring user
-    /// If not, developer has to manually call it to indicate that a reward was gifted to the current user
-    ///
     public func triggerReferringSuccess() {
-        guard apiKey != nil else {
-            ReefReferral.logger.error("Missing API key, did you forgot to initialize ReefReferal SDK ?")
+        guard let _ = apiKey else {
+            ReefReferral.logger.error("Missing API key, did you forget to initialize ReefReferal SDK ?")
             return
         }
         guard let link = data.referringInfo?.link else {
@@ -103,31 +114,22 @@ public class ReefReferral {
             let response = await ReefAPIClient.shared.send(request)
             switch response {
             case .success(let referringInfo):
-                self.data.referringInfo = referringInfo
-                self.data.save()
                 ReefReferral.logger.info("Reffering user did claim reward")
-                self.delegate?.referringUpdate(linkURL: referringInfo.link.linkURL,
-                                               received: referringInfo.received,
-                                               successes: referringInfo.successes,
-                                                rewardEligibility: referringInfo.link.reward_status,
-                                                rewardURL: referringInfo.link.rewardURL)
+                data.referringInfo = referringInfo
+                data.save()
+                DispatchQueue.main.async {
+                    self.updateReferringInfos()
+                }
             case .failure(let error):
                 ReefReferral.logger.error("\(error)")
             }
         }
     }
     
-    
     // MARK: - Referred part
     
-    /// Asynchronously handles deep links and extracts the link_id from the URL.
-    /// Automatically called either from the AppStore redirection (when using coupon) or from the browser
-    ///
-    /// - Parameters:
-    ///   - url: The deep link URL.
-    ///
     public func handleDeepLink(url: URL) {
-        guard apiKey != nil else {
+        guard let _ = apiKey else {
             ReefReferral.logger.error("Missing API key, did you forget to initialize ReefReferral SDK?")
             return
         }
@@ -137,19 +139,13 @@ public class ReefReferral {
             return
         }
         
-//        if linkId == data.referralInfo?.link.id {
-//            ReefReferral.logger.debug("Cannot use own link")
-//            return
-//        }
-        
         if let referalId = data.referredInfo?.referred_user.id {
             ReefReferral.logger.debug("Referal already opened with referred ID : \(referalId)")
             return
         }
         
         Task {
-            let udid = UUID().uuidString // data.udid
-            // Extract the link_id from the URL
+            let udid = UUID().uuidString
             let request = HandleDeepLinkRequest(link_id: linkId, udid: udid)
             let response = await ReefAPIClient.shared.send(request)
             switch response {
@@ -157,8 +153,7 @@ public class ReefReferral {
                 data.referredInfo = referredInfo
                 data.save()
                 DispatchQueue.main.async {
-                    self.delegate?.referredUpdate(status: referredInfo.referred_user.referred_status,
-                                                  offerURL: referredInfo.referred_user.appleOfferURL)
+                    self.updateReferredInfos()
                 }
             case .failure(let error):
                 ReefReferral.logger.error("\(error)")
@@ -166,13 +161,8 @@ public class ReefReferral {
         }
     }
     
-    /// Asynchronously triggers a referral success event with the given referralID parameter.
-    /// This get automatically triggered if the developer has properly added an Apple Coupon Code for Referred user
-    /// If not, the developer has to manually call it to indicate that the current user referral was succesfull
-    ///
-    ///
     public func triggerReferralSuccess() {
-        guard apiKey != nil else {
+        guard let _ = apiKey else {
             ReefReferral.logger.error("Missing API key, did you forgot to initialize ReefReferal SDK ?")
             return
         }
@@ -190,8 +180,7 @@ public class ReefReferral {
                 data.referredInfo = referredInfo
                 data.save()
                 DispatchQueue.main.async {
-                    self.delegate?.referredUpdate(status: referredInfo.referred_user.referred_status,
-                                                  offerURL: referredInfo.referred_user.appleOfferURL)
+                    self.updateReferredInfos()
                 }
             case .failure(let error):
                 ReefReferral.logger.error("\(error)")
@@ -199,18 +188,14 @@ public class ReefReferral {
         }
     }
     
-    
     // MARK: - Dev Utils
     
-    /// Clears local data
-    ///
     public func clear() {
         data.referringInfo = nil
         data.referredInfo = nil
         data.save()
-        self.delegate?.referringUpdate(linkURL: nil, received: 0, successes: 0, rewardEligibility: .not_eligible, rewardURL: nil)
-        self.delegate?.referredUpdate(status: .none, offerURL: nil)
+        
+        self.updateReferringInfos()
+        self.updateReferredInfos()
     }
-
 }
-
