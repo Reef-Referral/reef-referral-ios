@@ -200,11 +200,13 @@ public class ReefReferral {
             let request = NotifyReferredSuccessRequest(referred_user_id: referredUser.id)
             let response = await ReefAPIClient.shared.send(request)
             switch response {
-            case .success(let result):
+            case .success(let referredInfo):
                 ReefReferral.logger.info("Reffered user did claim offer")
+                data.referredInfo = referredInfo
+                data.save()
                 DispatchQueue.main.async {
-                    self.delegate?.referredUpdate(status: result.referred_user.referred_status,
-                                                  offerURL: result.referred_user.appleOfferURL)
+                    self.delegate?.referredUpdate(status: referredInfo.referred_user.referred_status,
+                                                  offerURL: referredInfo.referred_user.appleOfferURL)
                 }
             case .failure(let error):
                 ReefReferral.logger.error("\(error)")
