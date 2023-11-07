@@ -4,46 +4,31 @@ import Logging
 import UIKit
 
 public protocol ReefReferralDelegate {
-    func referringUpdate(linkURL:URL?,
-                          received: Int,
-                          successes: Int,
-                          rewardEligibility: ReferringRewardStatus,
-                          rewardURL: URL?)
-    func referredUpdate(status: ReferredStatus,
-                        offerURL: URL?)
+    func referringUpdate(linkURL: URL?, received: Int, successes: Int, rewardEligibility: ReferringRewardStatus, rewardURL: URL?)
+    func referredUpdate(status: ReferredStatus, offerURL: URL?)
 }
 
 extension ReefReferralDelegate {
-    public func referringUpdate(linkURL:URL?,
-                          received: Int,
-                          successes: Int,
-                          rewardEligibility: ReferringRewardStatus,
-                         rewardURL: URL?) {}
-    public func referredUpdate(status: ReferredStatus,
-                        offerURL: URL?) {}
+    public func referringUpdate(linkURL: URL?, received: Int, successes: Int, rewardEligibility: ReferringRewardStatus, rewardURL: URL?) {}
+    public func referredUpdate(status: ReferredStatus, offerURL: URL?) {}
 }
- 
-/// ReefReferral SDK main class
+
 public class ReefReferral {
-    
     public static let shared = ReefReferral()
     public static var logger = Logger(label: "com.reef-referral.logger")
     public var delegate: ReefReferralDelegate?
     
-    // Referring Data
-    public var referralLinkURL: URL? { data.referringInfo?.link.linkURL }
-    public var referralReceived: Int { data.referringInfo?.received ?? 0 }
-    public var referralSuccess: Int { data.referringInfo?.successes ?? 0 }
-    public var rewardEligibility: ReferringRewardStatus { data.referringInfo?.link.reward_status ?? .not_eligible }
-    public var rewardURL: URL? { data.referringInfo?.link.rewardURL }
-    
-    // Referred Data
-    public var referredStatus: ReferredStatus { data.referredInfo?.referred_user.referred_status ?? .none }
-    public var referralOfferURL: URL? { data.referredInfo?.referred_user.appleOfferURL }
-    
     private var couponHandler = CouponRedemptionDetector()
-    private var apiKey: String? // currently app-id, we'll need to do something more flexible
+    private var apiKey: String?
     private var data: ReefData = ReefData.load()
+    
+    public var referringLinkURL: URL? { data.referringInfo?.link.linkURL }
+    public var referringReceivedCount: Int { data.referringInfo?.received ?? 0 }
+    public var referringSuccessCount: Int { data.referringInfo?.successes ?? 0 }
+    public var referringRewardEligibility: ReferringRewardStatus { data.referringInfo?.link.reward_status ?? .not_eligible }
+    public var referringRewardURL: URL? { data.referringInfo?.link.rewardURL }
+    public var referredStatus: ReferredStatus { data.referredInfo?.referred_user.referred_status ?? .none }
+    public var referredOfferURL: URL? { data.referredInfo?.referred_user.appleOfferURL }
     
     // MARK: - Common
     
@@ -52,9 +37,10 @@ public class ReefReferral {
     /// - Parameters:
     ///   - apiKey: The API key to be used for configuration.
     ///
-    public func start(apiKey: String, delegate: ReefReferralDelegate? = nil) {
+    public func start(apiKey: String, delegate: ReefReferralDelegate? = nil, logLevel: Logger.Level) {
         self.apiKey = apiKey
         self.delegate = delegate
+        ReefReferral.logger.logLevel = logLevel
         
         NotificationCenter.default.addObserver(
             self,
@@ -62,7 +48,6 @@ public class ReefReferral {
             name: UIApplication.didBecomeActiveNotification,
             object: nil
         )
-        
     }
     
     /// Check status of referral for the current user
