@@ -7,13 +7,13 @@
 
 import Foundation
 
-struct NotifyReferralSuccessRequest: APIRequest {
-    typealias Response = ReferredUser
+struct NotifyReferredSuccessRequest: APIRequest {
+    typealias Response = ReferredInfo
 
-    let referral_id: String
+    let referred_user_id: String
 
     var resourceName: String {
-        return "/notify_referral_success"
+        return "notify_referral_success"
     }
 
     var httpMethod: HTTPMethod {

@@ -8,12 +8,12 @@
 import Foundation
 
 struct NotifyReferringSuccessRequest: APIRequest {
-    typealias Response = ReferralLink
+    typealias Response = ReferringInfo
 
     let link_id: String
 
     var resourceName: String {
-        return "/notify_referring_success"
+        return "notify_referring_success"
     }
 
     var httpMethod: HTTPMethod {

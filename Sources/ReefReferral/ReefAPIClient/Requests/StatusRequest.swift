@@ -8,7 +8,7 @@
 import Foundation
 
 public struct StatusRequest: APIRequest {
-    public typealias Response = ReferralStatus
+    public typealias Response = ReferringInfo
     
     var udid: String
     var app_id: String

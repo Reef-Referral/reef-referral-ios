@@ -8,13 +8,13 @@
 import Foundation
 
 struct HandleDeepLinkRequest: APIRequest {
-    typealias Response = ReferredUser
+    typealias Response = ReferredInfo
 
     let link_id: String
     let udid: String
 
     var resourceName: String {
-        return "/handle_deep_link"
+        return "handle_deep_link"
     }
 
     var httpMethod: HTTPMethod {
