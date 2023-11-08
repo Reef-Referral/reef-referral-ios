@@ -63,7 +63,6 @@ public class ReefReferral: ObservableObject {
         self.apiKey = apiKey
         self.delegate = delegate
         ReefReferral.logger.logLevel = logLevel
-        
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(status),
@@ -85,11 +84,9 @@ public class ReefReferral: ObservableObject {
             case .success(let infos):
                 data.referringInfo = infos
                 data.save()
-                
                 couponHandler.referredOfferCode = infos.offer.referral_offer_code
                 couponHandler.referredOfferCode = infos.offer.referring_offer_code
                 couponHandler.checkForCouponRedemption()
-                
                 DispatchQueue.main.async {
                     self.updateReferringInfos()
                 }
@@ -108,7 +105,6 @@ public class ReefReferral: ObservableObject {
             ReefReferral.logger.error("No referral link found")
             return
         }
-        
         Task {
             let request = NotifyReferringSuccessRequest(link_id: link.id)
             let response = await ReefAPIClient.shared.send(request)
@@ -197,7 +193,6 @@ public class ReefReferral: ObservableObject {
         data.referringInfo = nil
         data.referredInfo = nil
         data.save()
-        
         self.updateReferringInfos()
         self.updateReferredInfos()
     }
