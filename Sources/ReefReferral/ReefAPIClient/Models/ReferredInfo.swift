@@ -18,6 +18,7 @@ public struct ReferredUser: Codable {
     public let created_at: Date
     public let referred_status: ReferredStatus
     public let apple_offer_url: String?
+    public let referring_offer_automatic_redirect: Bool
     
     public var appleOfferURL: URL? {
         guard let apple_offer_url else { return nil }

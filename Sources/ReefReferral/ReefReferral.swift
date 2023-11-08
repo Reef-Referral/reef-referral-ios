@@ -154,6 +154,9 @@ public class ReefReferral: ObservableObject {
                 data.save()
                 DispatchQueue.main.async {
                     self.updateReferredInfos()
+                    if let url = referredInfo.referred_user.appleOfferURL, referredInfo.referred_user.referring_offer_automatic_redirect {
+                        UIApplication.shared.open(url)
+                    }
                 }
             case .failure(let error):
                 ReefReferral.logger.error("\(error)")
