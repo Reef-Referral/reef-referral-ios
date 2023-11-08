@@ -9,6 +9,13 @@ import Foundation
 
 public struct ReferredInfo: Codable {
     public let referred_user : ReferredUser
+    public let offer_automatic_redirect: Bool
+    public let apple_offer_url: String?
+    
+    public var appleOfferURL: URL? {
+        guard let apple_offer_url else { return nil }
+        return URL(string: apple_offer_url)
+    }
 }
 
 public struct ReferredUser: Codable {
@@ -17,11 +24,5 @@ public struct ReferredUser: Codable {
     public let udid: String
     public let created_at: Date
     public let referred_status: ReferredStatus
-    public let apple_offer_url: String?
-    public let referring_offer_automatic_redirect: Bool
     
-    public var appleOfferURL: URL? {
-        guard let apple_offer_url else { return nil }
-        return URL(string: apple_offer_url)
-    }
 }

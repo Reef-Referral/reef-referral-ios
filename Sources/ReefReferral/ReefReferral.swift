@@ -54,7 +54,7 @@ public class ReefReferral: ObservableObject {
     private func updateReferredInfos() {
         let referredInfo = data.referredInfo
         referredStatus = referredInfo?.referred_user.referred_status ?? .none
-        referredOfferURL = referredInfo?.referred_user.appleOfferURL
+        referredOfferURL = referredInfo?.appleOfferURL
     }
 
     // MARK: - Common
@@ -150,7 +150,7 @@ public class ReefReferral: ObservableObject {
                 data.save()
                 DispatchQueue.main.async {
                     self.updateReferredInfos()
-                    if let url = referredInfo.referred_user.appleOfferURL, referredInfo.referred_user.referring_offer_automatic_redirect {
+                    if let url = referredInfo.appleOfferURL, referredInfo.offer_automatic_redirect {
                         UIApplication.shared.open(url)
                     }
                 }
