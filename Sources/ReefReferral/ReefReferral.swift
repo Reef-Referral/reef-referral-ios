@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import Logging
 import UIKit
+import Network
 
 public protocol ReefReferralDelegate {
     func referringUpdate(linkURL: URL?, received: Int, successes: Int, rewardEligibility: ReferringRewardStatus, rewardURL: URL?)
@@ -56,12 +57,26 @@ public class ReefReferral: ObservableObject {
         referredStatus = referredInfo?.referred_user.referred_status ?? .none
         referredOfferURL = referredInfo?.appleOfferURL
     }
+    
+    private func monitorNetworkStatus() {
+        let monitor = NWPathMonitor()
+        monitor.pathUpdateHandler = { path in
+            if path.status == .satisfied {
+                ReefReferral.logger.debug("🟢 Connection restored")
+                self.status()
+            } else {
+                ReefReferral.logger.debug("🔴 Not internet connection")
+            }
+        }
+        monitor.start(queue: DispatchQueue.global(qos: .background))
+    }
 
     // MARK: - Common
     
     public func start(apiKey: String, delegate: ReefReferralDelegate? = nil, logLevel: Logger.Level) {
         self.apiKey = apiKey
         self.delegate = delegate
+        self.monitorNetworkStatus()
         ReefReferral.logger.logLevel = logLevel
         NotificationCenter.default.addObserver(
             self,
