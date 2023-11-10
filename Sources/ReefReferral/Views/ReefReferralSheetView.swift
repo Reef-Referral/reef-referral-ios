@@ -18,7 +18,12 @@ class ImageLoader: ObservableObject {
             .map { UIImage(data: $0.data) }
             .replaceError(with: nil)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] in self?.image = $0 }
+            .sink { [weak self] image in
+                if image == nil {
+                    print("Error: Failed to load image")
+                }
+                self?.image = image
+            }
     }
     
     deinit {
@@ -30,18 +35,16 @@ struct LazyImageView: View {
     @StateObject private var loader = ImageLoader()
     
     let url: URL?
-    let placeholderImage: UIImage?
     
     var body: some View {
         Group {
             if let image = loader.image {
                 Image(uiImage: image)
                     .resizable()
-                    .aspectRatio(contentMode: .fit)
-            } else if let placeholderImage {
-                Image(uiImage: placeholderImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
+                    .aspectRatio(contentMode: .fill)
+            } else {
+                Color.gray.opacity(0.25)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .onAppear {
@@ -52,34 +55,94 @@ struct LazyImageView: View {
     }
 }
 
-struct ReferralSheetView: View {
-    
+public struct ReefReferralSheetView: View {
     let imageURL: URL
     let title: String
     let subtitle: String
     let description: String
     let footnote: String
     
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .center, spacing: 20) {
-                
-                LazyImageView(url: imageURL, placeholderImage: nil)
-                
-                Text(title)
-                    .font(.headline)
-                Text(subtitle)
-                    .font(.subheadline)
-                Text(description)
-                    .font(.body)
-                Button("Invite") {
-                    // Handle invite action
+    @ObservedObject private var reef = ReefReferral.shared
+
+    public init(imageURL: URL, title: String, subtitle: String, description: String, footnote: String) {
+        self.imageURL = imageURL
+        self.title = title
+        self.subtitle = subtitle
+        self.description = description
+        self.footnote = footnote
+    }
+    
+    public var body: some View {
+        GeometryReader { geometry in
+            VStack {
+                LazyImageView(url: imageURL)
+                    .frame(width: geometry.size.width, height: geometry.size.height / 3)
+                VStack(alignment: .center, spacing: 16) {
+                    Text(title)
+                        .font(.largeTitle)
+                        .foregroundColor(.blue)
+                    
+                    Text(subtitle)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    Text(description)
+                        .font(.body)
+                        .foregroundColor(.secondary)
                 }
+                .padding()
+                    
+                Spacer()
+                Button(action: {
+                                        // Handle invite action
+                }) {
+                    
+                    switch reef.rewardEligibility {
+                    case .not_eligible:
+                        Text("Invite")
+                            .foregroundColor(.white)
+                            .font(.headline)
+                            .padding()
+                            .background(Color.blue)
+                    case .eligible:
+                        Text("Claim Reward!")
+                            .foregroundColor(.white)
+                            .font(.headline)
+                            .padding()
+                            .background(Color.green)
+                    case .granted:
+                        Text("Reward Already Claimed")
+                            .foregroundColor(.white)
+                            .font(.headline)
+                            .padding()
+                            .background(Color.gray)
+                    }
+                    
+                }
+                
+                .cornerRadius(10)
+                
+                Spacer()
+                
+                VStack(spacing:8) {
+                    if reef.receivedCount > 0 {
+                        Text("\(reef.receivedCount) invitation received")
+                            .bold()
+                    }
+                    if reef.successCount > 0 {
+                        Text("\(reef.successCount) referral successes")
+                            .foregroundColor(.green)
+                            .bold()
+                    }
+                }
+                
+                Spacer()
                 Text(footnote)
                     .font(.footnote)
+                
             }
-            .padding()
         }
     }
 }
+
 
