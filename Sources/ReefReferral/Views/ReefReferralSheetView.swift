@@ -5,8 +5,8 @@
 //  Created by Alexis Creuzot on 09/11/2023.
 //
 
-import Foundation
 import SwiftUI
+import Foundation
 import Combine
 
 class ImageLoader: ObservableObject {
@@ -56,6 +56,9 @@ struct LazyImageView: View {
 }
 
 public struct ReefReferralSheetView: View {
+    
+    let apiKey: String
+    
     let imageURL: URL
     let title: String
     let subtitle: String
@@ -64,7 +67,8 @@ public struct ReefReferralSheetView: View {
     
     @ObservedObject private var reef = ReefReferral.shared
 
-    public init(imageURL: URL, title: String, subtitle: String, description: String, footnote: String) {
+    public init(apiKey:String,imageURL: URL, title: String, subtitle: String, description: String, footnote: String) {
+        self.apiKey = apiKey
         self.imageURL = imageURL
         self.title = title
         self.subtitle = subtitle
@@ -94,30 +98,61 @@ public struct ReefReferralSheetView: View {
                     
                 Spacer()
                 Button(action: {
-                                        // Handle invite action
-                }) {
-                    
                     switch reef.rewardEligibility {
                     case .not_eligible:
-                        Text("Invite")
-                            .foregroundColor(.white)
-                            .font(.headline)
-                            .padding()
-                            .background(Color.blue)
+                        if let referringLinkURL = reef.referringLinkURL {
+                            UIApplication.shared.open(referringLinkURL)
+                        } else {
+                            ReefReferral.logger.error("No referredOfferURL")
+                        }
                     case .eligible:
-                        Text("Claim Reward!")
-                            .foregroundColor(.white)
-                            .font(.headline)
-                            .padding()
-                            .background(Color.green)
+                        if let rewardURL = reef.rewardURL{
+                            UIApplication.shared.open(rewardURL)
+                        } else {
+                            ReefReferral.logger.error("No rewardURL")
+                        }
+                    default:
+                        break
+                    }
+                    
+                }) {
+                    switch reef.rewardEligibility {
+                    case .not_eligible:
+                        HStack(spacing: 8) {
+                            Text("Invite friends")
+                                .foregroundColor(.white)
+                                .font(.headline)
+                            Image(systemName: "square.and.arrow.up")
+                                .foregroundColor(.white)
+                                .font(.headline)
+                        }
+                        .padding()
+                        .background(Color.blue)
+                        
+                    case .eligible:
+                        HStack(spacing: 8){
+                            Text("Claim Reward!")
+                                .foregroundColor(.white)
+                                .font(.headline)
+                            Image(systemName: "gift.fill")
+                                .foregroundColor(.white)
+                                .font(.headline)
+                        }
+                        .padding()
+                        .background(Color.green)
                     case .granted:
-                        Text("Reward Already Claimed")
-                            .foregroundColor(.white)
-                            .font(.headline)
+                            HStack(spacing: 8){
+                                Text("Reward Already Claimed")
+                                    .foregroundColor(.white)
+                                    .font(.headline)
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.white)
+                                    .font(.headline)
+                            }
                             .padding()
                             .background(Color.gray)
                     }
-                    
+                
                 }
                 
                 .cornerRadius(10)
@@ -141,8 +176,15 @@ public struct ReefReferralSheetView: View {
                     .font(.footnote)
                 
             }
+            .onOpenURL { url in
+                reef.handleDeepLink(url: url)
+            }
+            .onAppear {
+                reef.start(apiKey: apiKey, logLevel: .trace)
+            }
         }
     }
+    
 }
 
 
