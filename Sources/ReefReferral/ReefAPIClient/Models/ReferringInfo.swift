@@ -14,7 +14,7 @@ public struct ReferringInfo: Codable {
     public let referred_users: [ReferredUser]
     
     public var received : Int { return self.referred_users.filter({ $0.referred_status == .received }).count }
-    public var successes: Int { return self.referred_users.filter({ $0.referred_status == .success }).count }
+    public var successes: Int { return self.referred_users.filter({ $0.referred_status == .redeemed }).count }
 }
 
 public struct ReferralLink: Codable {

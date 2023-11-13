@@ -10,11 +10,11 @@ import Foundation
 public enum ReferredStatus: String, Codable {
     case none
     case received
-    case success
+    case redeemed
 }
 
 public enum ReferringRewardStatus: String, Codable {
     case not_eligible
     case eligible
-    case granted
+    case redeemed
 }

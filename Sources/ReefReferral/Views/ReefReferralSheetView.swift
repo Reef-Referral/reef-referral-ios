@@ -9,57 +9,11 @@ import SwiftUI
 import Foundation
 import Combine
 
-class ImageLoader: ObservableObject {
-    @Published var image: UIImage?
-    private var cancellable: AnyCancellable?
-    
-    func load(fromURL url: URL) {
-        cancellable = URLSession.shared.dataTaskPublisher(for: url)
-            .map { UIImage(data: $0.data) }
-            .replaceError(with: nil)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] image in
-                if image == nil {
-                    print("Error: Failed to load image")
-                }
-                self?.image = image
-            }
-    }
-    
-    deinit {
-        cancellable?.cancel()
-    }
-}
-
-struct LazyImageView: View {
-    @StateObject private var loader = ImageLoader()
-    
-    let url: URL?
-    
-    var body: some View {
-        Group {
-            if let image = loader.image {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } else {
-                Color.gray.opacity(0.25)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-        }
-        .onAppear {
-            if let url = url {
-                loader.load(fromURL: url)
-            }
-        }
-    }
-}
-
 public struct ReefReferralSheetView: View {
     
     let apiKey: String
     
-    let imageURL: URL
+    let image: UIImage
     let title: String
     let subtitle: String
     let description: String
@@ -67,9 +21,9 @@ public struct ReefReferralSheetView: View {
     
     @ObservedObject private var reef = ReefReferral.shared
 
-    public init(apiKey:String,imageURL: URL, title: String, subtitle: String, description: String, footnote: String) {
+    public init(apiKey:String,image: UIImage, title: String, subtitle: String, description: String, footnote: String) {
         self.apiKey = apiKey
-        self.imageURL = imageURL
+        self.image = image
         self.title = title
         self.subtitle = subtitle
         self.description = description
@@ -79,7 +33,9 @@ public struct ReefReferralSheetView: View {
     public var body: some View {
         GeometryReader { geometry in
             VStack {
-                LazyImageView(url: imageURL)
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
                     .frame(width: geometry.size.width, height: geometry.size.height / 3)
                 VStack(alignment: .center, spacing: 16) {
                     Text(title)
@@ -106,7 +62,7 @@ public struct ReefReferralSheetView: View {
                             ReefReferral.logger.error("No referredOfferURL")
                         }
                     case .eligible:
-                        if let rewardURL = reef.rewardURL{
+                        if let rewardURL = reef.referringRewardOfferCodeURL{
                             UIApplication.shared.open(rewardURL)
                         } else {
                             ReefReferral.logger.error("No rewardURL")
@@ -140,7 +96,7 @@ public struct ReefReferralSheetView: View {
                         }
                         .padding()
                         .background(Color.green)
-                    case .granted:
+                    case .redeemed:
                             HStack(spacing: 8){
                                 Text("Reward Already Claimed")
                                     .foregroundColor(.white)
@@ -164,8 +120,8 @@ public struct ReefReferralSheetView: View {
                         Text("\(reef.receivedCount) invitation received")
                             .bold()
                     }
-                    if reef.successCount > 0 {
-                        Text("\(reef.successCount) referral successes")
+                    if reef.redeemedCount > 0 {
+                        Text("\(reef.redeemedCount) referral successes")
                             .foregroundColor(.green)
                             .bold()
                     }
@@ -180,7 +136,7 @@ public struct ReefReferralSheetView: View {
                 reef.handleDeepLink(url: url)
             }
             .onAppear {
-                reef.start(apiKey: apiKey, logLevel: .trace)
+                reef.start(apiKey: apiKey)
             }
         }
     }
