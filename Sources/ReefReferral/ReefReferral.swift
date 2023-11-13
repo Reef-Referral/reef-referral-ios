@@ -19,6 +19,17 @@ public extension ReefReferralDelegate {
     func referredUpdate(status: ReferredStatus, referredRewardOfferCodeURL: URL?) {}
 }
 
+public enum ReefError : Error {
+    case missingAPIKey
+    
+    public var localizedDescription: String {
+        switch self {
+        case .missingAPIKey:
+            return "Missing API key, did you forget to initialize ReefReferral SDK?"
+        }
+    }
+}
+
 public class ReefReferral: ObservableObject {
     public static let shared = ReefReferral()
     public static var logger = Logger(label: "com.reef-referral.logger")
@@ -47,7 +58,7 @@ public class ReefReferral: ObservableObject {
         let referringInfo = data.referringInfo
         referringLinkURL = referringInfo?.link.linkURL
         receivedCount = referringInfo?.received ?? 0
-        redeemedCount = referringInfo?.successes ?? 0
+        redeemedCount = referringInfo?.redeemed ?? 0
         rewardEligibility = referringInfo?.link.reward_status ?? .not_eligible
         referringRewardOfferCodeURL = referringInfo?.link.rewardURL
         delegate?.referringUpdate(
@@ -65,15 +76,20 @@ public class ReefReferral: ObservableObject {
         referredRewardOfferCodeURL = referredInfo?.appleOfferURL
     }
     
-    @objc private func monitorNetworkStatus() {
-        guard monitor.pathUpdateHandler == nil else { 
-            self.status()
+    @objc private func monitorNetworkStatus()  {
+        guard monitor.pathUpdateHandler == nil else {
+            Task {
+                await self.status()
+            }
             return
         }
         monitor.pathUpdateHandler = { path in
             if path.status == .satisfied {
                 ReefReferral.logger.debug("🟢 Connection restored")
-                self.status()
+                Task {
+                    await self.status()
+                }
+                
             } else {
                 ReefReferral.logger.debug("🔴 Not internet connection")
             }
@@ -108,34 +124,36 @@ public class ReefReferral: ObservableObject {
         )
     }
     
-    public func status() {
+    @discardableResult public func status() async -> Result<ReferralStatus, Error> {
         guard let apiKey = apiKey else {
-            ReefReferral.logger.critical("Missing API key, did you forget to initialize ReefReferral SDK?")
-            return
+            return .failure(ReefError.missingAPIKey)
         }
         
-        Task {
-            let testConnectionRequest = StatusRequest(udid: data.udid, app_id: apiKey)
-            let result = await ReefAPIClient.shared.send(testConnectionRequest)
-            switch result {
-            case .success(let infos):
-                data.referringInfo = infos
-                data.save()
-                couponHandler.referredOfferCode = infos.offer.referral_offer_code
-                couponHandler.referredOfferCode = infos.offer.referring_offer_code
-                couponHandler.checkForCouponRedemption()
-                DispatchQueue.main.async {
-                    self.updateReferringInfos()
-                }
-            case .failure(let error):
-                ReefReferral.logger.error("\(error.localizedDescription)")
+        let testConnectionRequest = StatusRequest(udid: data.udid, app_id: apiKey)
+        let result = await ReefAPIClient.shared.send(testConnectionRequest)
+        
+        switch result {
+        case .success(let infos):
+            data.referringInfo = infos
+            data.save()
+            couponHandler.referredOfferCode = infos.offer.referral_offer_code
+            couponHandler.referredOfferCode = infos.offer.referring_offer_code
+            couponHandler.checkForCouponRedemption()
+            DispatchQueue.main.async {
+                self.updateReferringInfos()
             }
+            return .success(infos.status)
+            
+        case .failure(let error):
+            ReefReferral.logger.error("\(error.localizedDescription)")
+            return .failure(error)
         }
+       
     }
     
     public func triggerReferringSuccess() {
         guard let _ = apiKey else {
-            ReefReferral.logger.critical("Missing API key, did you forget to initialize ReefReferal SDK ?")
+            ReefReferral.logger.critical("\(ReefError.missingAPIKey.localizedDescription)")
             return
         }
         guard let link = data.referringInfo?.link else {
@@ -163,7 +181,7 @@ public class ReefReferral: ObservableObject {
     
     public func handleDeepLink(url: URL) {
         guard let _ = apiKey else {
-            ReefReferral.logger.critical("Missing API key, did you forget to initialize ReefReferral SDK?")
+            ReefReferral.logger.critical("\(ReefError.missingAPIKey.localizedDescription)")
             return
         }
         
@@ -199,7 +217,7 @@ public class ReefReferral: ObservableObject {
     
     public func triggerReferralSuccess() {
         guard let _ = apiKey else {
-            ReefReferral.logger.critical("Missing API key, did you forgot to initialize ReefReferal SDK ?")
+            ReefReferral.logger.critical("\(ReefError.missingAPIKey.localizedDescription)")
             return
         }
         guard let referredUser = data.referredInfo?.referred_user else {

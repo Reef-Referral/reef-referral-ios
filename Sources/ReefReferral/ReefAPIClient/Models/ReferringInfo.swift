@@ -7,14 +7,28 @@
 
 import Foundation
 
+public struct ReferralStatus {
+    public let linkURL: URL?
+    public let received: Int
+    public let redeemed: Int
+    public let rewardEligibility: ReferringRewardStatus
+    public let referringRewardOfferCodeURL: URL?
+}
 
 public struct ReferringInfo: Codable {
     public let link: ReferralLinkContent
     public let offer: ReferralOffer 
     public let referred_users: [ReferredUser]
-    
     public var received : Int { return self.referred_users.filter({ $0.referred_status == .received }).count }
-    public var successes: Int { return self.referred_users.filter({ $0.referred_status == .redeemed }).count }
+    public var redeemed: Int { return self.referred_users.filter({ $0.referred_status == .redeemed }).count }
+    
+    var status : ReferralStatus {
+        return ReferralStatus.init(linkURL: link.linkURL,
+                                   received: received,
+                                   redeemed: redeemed,
+                                   rewardEligibility: link.reward_status,
+                                   referringRewardOfferCodeURL: link.rewardURL)
+    }
 }
 
 public struct ReferralLink: Codable {
