@@ -35,9 +35,9 @@ internal class CouponRedemptionDetector: NSObject, SKPaymentTransactionObserver 
                 let productIdentifier = transaction.payment.productIdentifier
                 switch productIdentifier {
                 case referredOfferCode:
-                    ReefReferral.shared.triggerReferralSuccess()
+                    ReefReferral.shared.triggerReceiverSuccess()
                 case referringOfferCode:
-                    ReefReferral.shared.triggerReferringSuccess()
+                    ReefReferral.shared.triggerSenderSuccess()
                 default:
                     ReefReferral.logger.debug("Unknown productIdentifier \(productIdentifier), ignoring")
                 }

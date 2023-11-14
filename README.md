@@ -57,7 +57,7 @@ ReefReferral.shared offers referral-related information using the following prop
 
 - `referringLinkURL`: The URL of the referring user's referral link.
 - `receivedCount`: The number of referrals received by the referring user.
-- `successCount`: The number of successful referrals made by the referring user.
+- `redeemedCount`: The number of successful referrals made by the referring user.
 - `rewardEligibility`: The eligibility status for the referring user's reward.
 - `rewardURL`: The URL to claim the referring user's reward.
 - `referredStatus`: The status of the referred user.
@@ -67,7 +67,7 @@ You can also implement the delegate protocol to get updates on those properties 
 
 ```swift
 public protocol ReefReferralDelegate {
-    func referringUpdate(linkURL: URL?, received: Int, successes: Int, rewardEligibility: ReferringRewardStatus, rewardURL: URL?)
+    func referringUpdate(linkURL: URL?, received: Int, redeemed: Int, rewardEligibility: ReferringRewardStatus, rewardURL: URL?)
     func referredUpdate(status: ReferredStatus, offerURL: URL?)
 }
 ``` 

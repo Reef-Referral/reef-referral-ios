@@ -11,14 +11,14 @@ public struct ReferralStatus {
     public let linkURL: URL?
     public let received: Int
     public let redeemed: Int
-    public let rewardEligibility: ReferringRewardStatus
+    public let rewardEligibility: SenderRewardStatus
     public let referringRewardOfferCodeURL: URL?
 }
 
-public struct ReferringInfo: Codable {
+public struct SenderInfo: Codable {
     public let link: ReferralLinkContent
     public let offer: ReferralOffer 
-    public let referred_users: [ReferredUser]
+    public let referred_users: [Receiver]
     public var received : Int { return self.referred_users.filter({ $0.referred_status == .received }).count }
     public var redeemed: Int { return self.referred_users.filter({ $0.referred_status == .redeemed }).count }
     
@@ -38,7 +38,7 @@ public struct ReferralLink: Codable {
 public struct ReferralLinkContent: Codable {
     
     public let id: String
-    public let reward_status: ReferringRewardStatus
+    public let reward_status: SenderRewardStatus
     public let link_url: String
     public let reward_offer_url : String?
     

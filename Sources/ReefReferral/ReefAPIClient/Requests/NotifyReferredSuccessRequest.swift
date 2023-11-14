@@ -8,7 +8,7 @@
 import Foundation
 
 struct NotifyReferredSuccessRequest: APIRequest {
-    typealias Response = ReferredInfo
+    typealias Response = ReceiverInfo
 
     let referred_user_id: String
 

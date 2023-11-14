@@ -7,8 +7,8 @@
 
 import Foundation
 
-public struct ReferredInfo: Codable {
-    public let referred_user : ReferredUser
+public struct ReceiverInfo: Codable {
+    public let referred_user : Receiver
     public let offer_automatic_redirect: Bool
     public let apple_offer_url: String?
     
@@ -18,11 +18,9 @@ public struct ReferredInfo: Codable {
     }
 }
 
-public struct ReferredUser: Codable {
-    
+public struct Receiver: Codable {
     public let id: String
     public let udid: String
     public let created_at: Date
-    public let referred_status: ReferredStatus
-    
+    public let referred_status: ReceiverOfferStatus
 }
