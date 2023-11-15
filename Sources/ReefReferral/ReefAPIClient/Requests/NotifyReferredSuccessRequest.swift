@@ -8,7 +8,7 @@
 import Foundation
 
 struct NotifyReferredSuccessRequest: APIRequest {
-    typealias Response = ReceiverInfo
+    typealias Response = Reef.ReceiverInfo
 
     let referred_user_id: String
 

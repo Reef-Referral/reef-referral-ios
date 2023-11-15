@@ -8,7 +8,7 @@
 import Foundation
 
 struct NotifyReferringSuccessRequest: APIRequest {
-    typealias Response = SenderInfo
+    typealias Response = Reef.SenderInfo
 
     let link_id: String
 

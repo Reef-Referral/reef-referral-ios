@@ -8,7 +8,7 @@
 import Foundation
 
 struct HandleDeepLinkRequest: APIRequest {
-    typealias Response = ReceiverInfo
+    typealias Response = Reef.ReceiverInfo
 
     let link_id: String
     let udid: String

@@ -7,30 +7,34 @@
 
 import Foundation
 
-public enum ReceiverOfferStatus: String, Codable {
-    case none
-    case received
-    case redeemed
-}
-
-public enum SenderRewardStatus: String, Codable {
-    case not_eligible
-    case eligible
-    case redeemed
-}
-
-public enum LogLevel {
-    case debug
-    case none
-}
-
-public enum ReefError : Error {
-    case missingAPIKey
+public extension Reef {
     
-    public var localizedDescription: String {
-        switch self {
-        case .missingAPIKey:
-            return "Missing API key, did you forget to initialize ReefReferral SDK?"
+    enum ReceiverOfferStatus: String, Codable {
+        case none
+        case received
+        case redeemed
+    }
+
+    enum SenderRewardStatus: String, Codable {
+        case not_eligible
+        case eligible
+        case redeemed
+    }
+
+    enum LogLevel {
+        case debug
+        case none
+    }
+
+    enum ReefError : Error {
+        case missingAPIKey
+        
+        public var localizedDescription: String {
+            switch self {
+            case .missingAPIKey:
+                return "Missing API key, did you forget to initialize ReefReferral SDK?"
+            }
         }
     }
+
 }

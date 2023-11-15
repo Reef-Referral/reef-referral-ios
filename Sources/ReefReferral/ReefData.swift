@@ -15,8 +15,8 @@ public struct ReefData: Codable {
     
     var udid: String = UUID().uuidString
     
-    public var referringInfo: SenderInfo?
-    public var referredInfo: ReceiverInfo?
+    public var referringInfo: Reef.SenderInfo?
+    public var referredInfo: Reef.ReceiverInfo?
     
     func save() {
         do {

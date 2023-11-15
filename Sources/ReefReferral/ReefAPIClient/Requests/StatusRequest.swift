@@ -8,7 +8,7 @@
 import Foundation
 
 public struct StatusRequest: APIRequest {
-    public typealias Response = SenderInfo
+    public typealias Response = Reef.SenderInfo
     
     var udid: String
     var app_id: String

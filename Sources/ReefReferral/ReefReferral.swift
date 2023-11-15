@@ -4,14 +4,15 @@ import Logging
 import UIKit
 import Network
 
+public struct Reef {} // Namespace
 
 public protocol ReefReferralDelegate {
     func referringUpdate(senderLinkURL: URL?, 
                          senderLinkReceivedCount: Int,
                          senderLinkRedeemedCount: Int,
-                         senderRewardEligibility: SenderRewardStatus,
+                         senderRewardEligibility: Reef.SenderRewardStatus,
                          senderRewardCodeURL: URL?)
-    func referredUpdate(receiverStatus: ReceiverOfferStatus, 
+    func referredUpdate(receiverStatus: Reef.ReceiverOfferStatus,
                         receiverOfferCodeURL: URL?)
 }
 
@@ -19,9 +20,9 @@ public extension ReefReferralDelegate {
     func referringUpdate(senderLinkURL: URL?,
                          senderLinkReceivedCount: Int,
                          senderLinkRedeemedCount: Int,
-                         senderRewardEligibility: SenderRewardStatus,
+                         senderRewardEligibility: Reef.SenderRewardStatus,
                          senderRewardCodeURL: URL?) {}
-    func referredUpdate(receiverStatus: ReceiverOfferStatus,
+    func referredUpdate(receiverStatus: Reef.ReceiverOfferStatus,
                         receiverOfferCodeURL: URL?) {}
 }
 
@@ -38,10 +39,10 @@ public class ReefReferral: ObservableObject {
     @Published public var senderLinkURL: URL? = nil
     @Published public var senderLinkReceivedCount: Int = 0
     @Published public var senderLinkRedeemedCount: Int = 0
-    @Published public var senderRewardEligibility: SenderRewardStatus = .not_eligible
+    @Published public var senderRewardEligibility: Reef.SenderRewardStatus = .not_eligible
     @Published public var senderRewardCodeURL: URL? = nil
     
-    @Published public var receiverStatus: ReceiverOfferStatus = .none
+    @Published public var receiverStatus: Reef.ReceiverOfferStatus = .none
     @Published public var receiverOfferCodeURL: URL? = nil
     
     init() {
@@ -92,9 +93,9 @@ public class ReefReferral: ObservableObject {
         monitor.start(queue: DispatchQueue.global(qos: .background))
     }
     
-    @discardableResult private func status() async -> Result<ReferralStatus, Error> {
+    @discardableResult private func status() async -> Result<Reef.ReferralStatus, Error> {
         guard let apiKey = apiKey else {
-            return .failure(ReefError.missingAPIKey)
+            return .failure(Reef.ReefError.missingAPIKey)
         }
         
         let testConnectionRequest = StatusRequest(udid: data.udid, app_id: apiKey)
@@ -121,7 +122,7 @@ public class ReefReferral: ObservableObject {
     
     // MARK: - Common
     
-    public func start(apiKey: String, delegate: ReefReferralDelegate? = nil, logLevel: LogLevel = .none) {
+    public func start(apiKey: String, delegate: ReefReferralDelegate? = nil, logLevel: Reef.LogLevel = .none) {
         self.apiKey = apiKey
         self.delegate = delegate
         
@@ -156,13 +157,14 @@ public class ReefReferral: ObservableObject {
         
     public func triggerSenderSuccess() {
         guard let _ = apiKey else {
-            ReefReferral.logger.critical("\(ReefError.missingAPIKey.localizedDescription)")
+            ReefReferral.logger.critical("\(Reef.ReefError.missingAPIKey.localizedDescription)")
             return
         }
         guard let link = data.referringInfo?.link else {
             ReefReferral.logger.error("No referral link found")
             return
         }
+        
         Task {
             let request = NotifyReferringSuccessRequest(link_id: link.id)
             let response = await ReefAPIClient.shared.send(request)
@@ -183,7 +185,7 @@ public class ReefReferral: ObservableObject {
     
     public func handleDeepLink(url: URL) {
         guard let _ = apiKey else {
-            ReefReferral.logger.critical("\(ReefError.missingAPIKey.localizedDescription)")
+            ReefReferral.logger.critical("\(Reef.ReefError.missingAPIKey.localizedDescription)")
             return
         }
         
@@ -214,7 +216,7 @@ public class ReefReferral: ObservableObject {
     
     public func triggerReceiverSuccess() {
         guard let _ = apiKey else {
-            ReefReferral.logger.critical("\(ReefError.missingAPIKey.localizedDescription)")
+            ReefReferral.logger.critical("\(Reef.ReefError.missingAPIKey.localizedDescription)")
             return
         }
         guard let referredUser = data.referredInfo?.referred_user else {
