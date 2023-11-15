@@ -192,11 +192,6 @@ public class ReefReferral: ObservableObject {
             return
         }
         
-        if let referalId = data.referredInfo?.referred_user.id {
-            ReefReferral.logger.debug("Referal already opened with referred ID : \(referalId)")
-            return
-        }
-        
         Task {
             let udid = UUID().uuidString
             let request = HandleDeepLinkRequest(link_id: linkId, udid: udid)
