@@ -48,7 +48,9 @@ public extension Reef {
     
     struct ReferralOffer: Codable {
         public let id: String
+        public let referral_offer_id: String
         public let referral_offer_code: String
+        public let referring_offer_id: String
         public let referring_offer_code: String
         public let referring_offer_eligibility: Int
     }

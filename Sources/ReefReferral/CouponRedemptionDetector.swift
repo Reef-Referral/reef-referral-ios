@@ -10,8 +10,8 @@ import StoreKit
 
 internal class CouponRedemptionDetector: NSObject, SKPaymentTransactionObserver {
     
-    public var referredOfferCode : String?
-    public var referringOfferCode : String?
+    public var receiverOfferId : String?
+    public var senderRewardOfferId : String?
     
     public override init() {
         super.init()
@@ -19,7 +19,7 @@ internal class CouponRedemptionDetector: NSObject, SKPaymentTransactionObserver 
     }
 
     func checkForCouponRedemption() {
-        let productIdentifiers: [String] = [referredOfferCode, referringOfferCode].compactMap {$0}
+        let productIdentifiers: [String] = [receiverOfferId, senderRewardOfferId].compactMap {$0}
         let productsRequest = SKProductsRequest(productIdentifiers: Set(productIdentifiers))
         productsRequest.start()
     }
@@ -34,9 +34,9 @@ internal class CouponRedemptionDetector: NSObject, SKPaymentTransactionObserver 
             case .purchased:
                 let productIdentifier = transaction.payment.productIdentifier
                 switch productIdentifier {
-                case referredOfferCode:
+                case receiverOfferId:
                     ReefReferral.shared.triggerReceiverSuccess()
-                case referringOfferCode:
+                case senderRewardOfferId:
                     ReefReferral.shared.triggerSenderSuccess()
                 default:
                     ReefReferral.logger.debug("Unknown productIdentifier \(productIdentifier), ignoring")

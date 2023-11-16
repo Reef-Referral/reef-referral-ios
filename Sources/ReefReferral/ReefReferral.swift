@@ -105,8 +105,8 @@ public class ReefReferral: ObservableObject {
         case .success(let infos):
             data.referringInfo = infos
             data.save()
-            couponHandler.referredOfferCode = infos.offer.referral_offer_code
-            couponHandler.referredOfferCode = infos.offer.referring_offer_code
+            couponHandler.receiverOfferId = infos.offer.referral_offer_id
+            couponHandler.receiverOfferId = infos.offer.referring_offer_id
             couponHandler.checkForCouponRedemption()
             DispatchQueue.main.async {
                 self.updateSenderInfos()
@@ -114,7 +114,7 @@ public class ReefReferral: ObservableObject {
             return .success(infos.status)
             
         case .failure(let error):
-            ReefReferral.logger.error("\(error.localizedDescription)")
+            ReefReferral.logger.error("\(error)")
             return .failure(error)
         }
        
@@ -234,6 +234,34 @@ public class ReefReferral: ObservableObject {
                 DispatchQueue.main.async {
                     self.updateReceiverInfos()
                 }
+            case .failure(let error):
+                ReefReferral.logger.error("\(error)")
+            }
+        }
+    }
+    
+    public func checkPurchases() {
+        guard let _ = apiKey else {
+            ReefReferral.logger.critical("\(Reef.ReefError.missingAPIKey.localizedDescription)")
+            return
+        }
+        guard let link = data.referringInfo?.link else {
+            ReefReferral.logger.error("No referral link found")
+            return
+        }
+        
+        guard   let receiptURL = Bundle.main.appStoreReceiptURL,
+                let receiptData = try? Data(contentsOf: receiptURL) else {
+            ReefReferral.logger.error("No receipt data")
+            return
+        }
+        
+        Task {
+            let request = CheckPurchasesRequest(link_id: link.id, receipt_data: receiptData.base64EncodedString())
+            let response = await ReefAPIClient.shared.send(request)
+            switch response {
+            case .success(let result):
+                ReefReferral.logger.debug("\(result.verification_result)")
             case .failure(let error):
                 ReefReferral.logger.error("\(error)")
             }
