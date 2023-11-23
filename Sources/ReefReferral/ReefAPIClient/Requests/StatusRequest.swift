@@ -12,6 +12,7 @@ public struct StatusRequest: APIRequest {
     
     var udid: String
     var app_id: String
+    let receipt_data: String
     
     public var resourceName: String {
         return "status"

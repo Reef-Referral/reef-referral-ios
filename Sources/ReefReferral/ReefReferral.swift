@@ -4,7 +4,7 @@ import Logging
 import UIKit
 import Network
 
-public struct Reef {} // Namespace
+public struct Reef {} // Reef Namespace for public models
 
 public protocol ReefReferralDelegate {
     func referringUpdate(senderLinkURL: URL?, 
@@ -35,6 +35,12 @@ public class ReefReferral: ObservableObject {
     private var couponHandler = CouponRedemptionDetector()
     private var apiKey: String?
     private var data: ReefData = ReefData.load()
+    private var receiptData: String {
+        guard let url = Bundle.main.appStoreReceiptURL,
+              let data = try? Data.init(contentsOf: url)
+        else { return "" }
+        return data.base64EncodedString()
+    }
     
     @Published public var senderLinkURL: URL? = nil
     @Published public var senderLinkReceivedCount: Int = 0
@@ -98,8 +104,8 @@ public class ReefReferral: ObservableObject {
             return .failure(Reef.ReefError.missingAPIKey)
         }
         
-        let testConnectionRequest = StatusRequest(udid: data.udid, app_id: apiKey)
-        let result = await ReefAPIClient.shared.send(testConnectionRequest)
+        let statusRequest = StatusRequest(udid: data.udid, app_id: apiKey, receipt_data: receiptData)
+        let result = await ReefAPIClient.shared.send(statusRequest)
         
         switch result {
         case .success(let infos):
@@ -196,7 +202,7 @@ public class ReefReferral: ObservableObject {
         
         Task {
             let udid = UUID().uuidString
-            let request = HandleDeepLinkRequest(link_id: linkId, udid: udid)
+            let request = HandleDeepLinkRequest(link_id: linkId, udid: udid, receipt_data: receiptData)
             let response = await ReefAPIClient.shared.send(request)
             switch response {
             case .success(let referredInfo):
@@ -234,34 +240,6 @@ public class ReefReferral: ObservableObject {
                 DispatchQueue.main.async {
                     self.updateReceiverInfos()
                 }
-            case .failure(let error):
-                ReefReferral.logger.error("\(error)")
-            }
-        }
-    }
-    
-    public func checkPurchases() {
-        guard let _ = apiKey else {
-            ReefReferral.logger.critical("\(Reef.ReefError.missingAPIKey.localizedDescription)")
-            return
-        }
-        guard let link = data.referringInfo?.link else {
-            ReefReferral.logger.error("No referral link found")
-            return
-        }
-        
-        guard   let receiptURL = Bundle.main.appStoreReceiptURL,
-                let receiptData = try? Data(contentsOf: receiptURL) else {
-            ReefReferral.logger.error("No receipt data")
-            return
-        }
-        
-        Task {
-            let request = CheckPurchasesRequest(link_id: link.id, receipt_data: receiptData.base64EncodedString())
-            let response = await ReefAPIClient.shared.send(request)
-            switch response {
-            case .success(let result):
-                ReefReferral.logger.debug("\(result.verification_result)")
             case .failure(let error):
                 ReefReferral.logger.error("\(error)")
             }

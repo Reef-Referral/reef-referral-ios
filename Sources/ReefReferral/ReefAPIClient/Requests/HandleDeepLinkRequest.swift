@@ -12,6 +12,7 @@ struct HandleDeepLinkRequest: APIRequest {
 
     let link_id: String
     let udid: String
+    let receipt_data: String
 
     var resourceName: String {
         return "handle_deep_link"
