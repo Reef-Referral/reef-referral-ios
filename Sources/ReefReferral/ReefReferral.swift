@@ -41,13 +41,12 @@ public class ReefReferral: ObservableObject {
         else { return "" }
         return data.base64EncodedString()
     }
-    
+        
     @Published public var senderLinkURL: URL? = nil
     @Published public var senderLinkReceivedCount: Int = 0
     @Published public var senderLinkRedeemedCount: Int = 0
     @Published public var senderRewardEligibility: Reef.SenderRewardStatus = .not_eligible
     @Published public var senderRewardCodeURL: URL? = nil
-    
     @Published public var receiverStatus: Reef.ReceiverOfferStatus = .none
     @Published public var receiverOfferCodeURL: URL? = nil
     
@@ -70,6 +69,10 @@ public class ReefReferral: ObservableObject {
             senderRewardEligibility: senderRewardEligibility,
             senderRewardCodeURL: senderRewardCodeURL
         )
+    }
+    
+    public func setUserId(_ id : String) {
+        self.data.udid = id
     }
     
     private func updateReceiverInfos() {
