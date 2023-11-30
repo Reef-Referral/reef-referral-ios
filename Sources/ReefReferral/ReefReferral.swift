@@ -132,18 +132,15 @@ public class ReefReferral: ObservableObject {
         self.apiKey = apiKey
         self.delegate = delegate
         
-        self.monitorNetworkStatus()
-        
         // Custom log level
         switch logLevel {
         case .debug:
             ReefReferral.logger.logLevel = .error
-        case .none:
+        default:
             ReefReferral.logger.logLevel = .critical
         }
         
-        // Development logLevel
-        ReefReferral.logger.logLevel = .trace
+        self.monitorNetworkStatus()
         
         NotificationCenter.default.addObserver(
             self,
