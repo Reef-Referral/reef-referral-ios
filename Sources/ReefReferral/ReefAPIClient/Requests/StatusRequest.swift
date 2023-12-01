@@ -11,6 +11,7 @@ public struct StatusRequest: APIRequest {
     public typealias Response = Reef.SenderInfo
     
     var udid: String
+    var custom_id: String?
     var app_id: String
     let receipt_data: String
     

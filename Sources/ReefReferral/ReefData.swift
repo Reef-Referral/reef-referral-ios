@@ -14,6 +14,7 @@ public struct ReefData: Codable {
                         .appendingPathComponent("reef_data.json")
     
     var udid: String = UUID().uuidString
+    var custom_id: String?
     
     public var referringInfo: Reef.SenderInfo?
     public var referredInfo: Reef.ReceiverInfo?

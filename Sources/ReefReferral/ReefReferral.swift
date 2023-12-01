@@ -72,7 +72,10 @@ public class ReefReferral: ObservableObject {
     }
     
     public func setUserId(_ id : String) {
-        self.data.udid = id
+        self.data.custom_id = id
+        Task {
+            await self.status()
+        }
     }
     
     private func updateReceiverInfos() {
@@ -107,7 +110,7 @@ public class ReefReferral: ObservableObject {
             return .failure(Reef.ReefError.missingAPIKey)
         }
         
-        let statusRequest = StatusRequest(udid: data.udid, app_id: apiKey, receipt_data: receiptData)
+        let statusRequest = StatusRequest(udid: data.udid, custom_id:self.data.custom_id, app_id: apiKey, receipt_data: receiptData)
         let result = await ReefAPIClient.shared.send(statusRequest)
         
         switch result {
@@ -140,7 +143,7 @@ public class ReefReferral: ObservableObject {
         case .debug:
             ReefReferral.logger.logLevel = .error
         default:
-            ReefReferral.logger.logLevel = .critical
+            ReefReferral.logger.logLevel = .trace
         }
         
         self.monitorNetworkStatus()
@@ -201,7 +204,7 @@ public class ReefReferral: ObservableObject {
         }
         
         Task {
-            let udid = UUID().uuidString
+            let udid = self.data.custom_id ?? self.data.udid
             let request = HandleDeepLinkRequest(link_id: linkId, udid: udid, receipt_data: receiptData)
             let response = await ReefAPIClient.shared.send(request)
             switch response {
