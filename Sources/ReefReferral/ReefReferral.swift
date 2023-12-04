@@ -32,7 +32,6 @@ public class ReefReferral: ObservableObject {
     public var delegate: ReefReferralDelegate?
     
     private let monitor = NWPathMonitor()
-    private var couponHandler = CouponRedemptionDetector()
     private var apiKey: String?
     private var data: ReefData = ReefData.load()
     private var receiptData: String {
@@ -115,12 +114,9 @@ public class ReefReferral: ObservableObject {
         
         switch result {
         case .success(let infos):
-            data.referringInfo = infos
-            data.save()
-            couponHandler.receiverOfferId = infos.offer.referral_offer_id
-            couponHandler.receiverOfferId = infos.offer.referring_offer_id
-            couponHandler.checkForCouponRedemption()
             DispatchQueue.main.async {
+                self.data.referringInfo = infos
+                self.data.save()
                 self.updateSenderInfos()
             }
             return .success(infos.status)
@@ -179,9 +175,9 @@ public class ReefReferral: ObservableObject {
             let response = await ReefAPIClient.shared.send(request)
             switch response {
             case .success(let referringInfo):
-                data.referringInfo = referringInfo
-                data.save()
                 DispatchQueue.main.async {
+                    self.data.referringInfo = referringInfo
+                    self.data.save()
                     self.updateSenderInfos()
                 }
             case .failure(let error):
@@ -209,9 +205,10 @@ public class ReefReferral: ObservableObject {
             let response = await ReefAPIClient.shared.send(request)
             switch response {
             case .success(let referredInfo):
-                data.referredInfo = referredInfo
-                data.save()
+                
                 DispatchQueue.main.async {
+                    self.data.referredInfo = referredInfo
+                    self.data.save()
                     self.updateReceiverInfos()
                     if let url = referredInfo.appleOfferURL, referredInfo.offer_automatic_redirect {
                         UIApplication.shared.open(url)
