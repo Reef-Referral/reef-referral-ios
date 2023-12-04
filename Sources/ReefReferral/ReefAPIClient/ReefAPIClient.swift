@@ -8,8 +8,8 @@
 import Foundation
 
 public class ReefAPI : API {
-//    public var baseEndpointUrl: URL = URL(string: "https://api.reefreferral.com/")! 
-    public var baseEndpointUrl: URL = URL(string: "http://localhost:5000/")! 
+    public var baseEndpointUrl: URL = URL(string: "https://api.reefreferral.com/")! 
+//    public var baseEndpointUrl: URL = URL(string: "http://localhost:5000/")! 
     public var session : URLSession = URLSession.shared
     public var commonParameters : Parameters = [:]
 }
