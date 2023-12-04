@@ -139,7 +139,7 @@ public class ReefReferral: ObservableObject {
         case .debug:
             ReefReferral.logger.logLevel = .error
         default:
-            ReefReferral.logger.logLevel = .trace
+            ReefReferral.logger.logLevel = .critical
         }
         
         self.monitorNetworkStatus()
