@@ -13,7 +13,7 @@ struct SenderInfo: Codable, Equatable {
     let offer: ReferralOffer
     let referred_users: [Receiver]
 
-    var received : Int { return self.referred_users.filter({ $0.referred_status == .received }).count }
+    var received : Int { return self.referred_users.filter({ $0.referred_status == .eligible }).count }
     var redeemed: Int { return self.referred_users.filter({ $0.referred_status == .redeemed }).count }
 
     var status : ReferralStatus {
