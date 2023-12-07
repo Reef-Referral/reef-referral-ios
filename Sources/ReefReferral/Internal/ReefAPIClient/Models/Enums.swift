@@ -9,7 +9,7 @@ import Foundation
 
 public extension ReefReferral {
     
-    enum  : String, Codable {
+    enum ReceiverOfferStatus: String, Codable {
         case not_eligible = "none"
         case eligible = "eligible"
         case redeemed
