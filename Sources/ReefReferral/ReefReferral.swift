@@ -1,258 +1,86 @@
 import Foundation
-import Combine
 import Logging
 import UIKit
 import Network
 
-public struct Reef {} // Reef Namespace for public models
 
 public protocol ReefReferralDelegate {
-    func referringUpdate(senderLinkURL: URL?, 
-                         senderLinkReceivedCount: Int,
-                         senderLinkRedeemedCount: Int,
-                         senderRewardEligibility: Reef.SenderRewardStatus,
-                         senderRewardCodeURL: URL?)
-    func referredUpdate(receiverStatus: Reef.ReceiverOfferStatus,
-                        receiverOfferCodeURL: URL?)
+    func infoUpdated(referralInfo: ReefReferral.ReferralInfo)
 }
 
 public extension ReefReferralDelegate {
-    func referringUpdate(senderLinkURL: URL?,
-                         senderLinkReceivedCount: Int,
-                         senderLinkRedeemedCount: Int,
-                         senderRewardEligibility: Reef.SenderRewardStatus,
-                         senderRewardCodeURL: URL?) {}
-    func referredUpdate(receiverStatus: Reef.ReceiverOfferStatus,
-                        receiverOfferCodeURL: URL?) {}
+    func infoUpdated(referralInfo: ReefReferral.ReferralInfo) {}
 }
 
-public class ReefReferral: ObservableObject {
-    public static let shared = ReefReferral()
+public class ReefReferral {
     public static var logger = Logger(label: "com.reef-referral.logger")
+
+    public static let shared = ReefReferral()
     public var delegate: ReefReferralDelegate?
-    
-    private let monitor = NWPathMonitor()
-    private var apiKey: String?
-    private var data: ReefData = ReefData.load()
-    private var receiptData: String {
-        guard let url = Bundle.main.appStoreReceiptURL,
-              let data = try? Data.init(contentsOf: url)
-        else { return "" }
-        return data.base64EncodedString()
-    }
-        
-    @Published public var senderLinkURL: URL? = nil
-    @Published public var senderLinkReceivedCount: Int = 0
-    @Published public var senderLinkRedeemedCount: Int = 0
-    @Published public var senderRewardEligibility: Reef.SenderRewardStatus = .not_eligible
-    @Published public var senderRewardCodeURL: URL? = nil
-    @Published public var receiverStatus: Reef.ReceiverOfferStatus = .none
-    @Published public var receiverOfferCodeURL: URL? = nil
-    
-    init() {
-        self.updateSenderInfos()
-        self.updateReceiverInfos()
-    }
-    
-    private func updateSenderInfos() {
-        let referringInfo = data.referringInfo
-        self.senderLinkURL = referringInfo?.link.linkURL
-        self.senderLinkReceivedCount = referringInfo?.received ?? 0
-        self.senderLinkRedeemedCount = referringInfo?.redeemed ?? 0
-        self.senderRewardEligibility = referringInfo?.link.reward_status ?? .not_eligible
-        self.senderRewardCodeURL = referringInfo?.link.rewardURL
-        self.delegate?.referringUpdate(
-            senderLinkURL: senderLinkURL,
-            senderLinkReceivedCount: senderLinkReceivedCount,
-            senderLinkRedeemedCount: senderLinkRedeemedCount,
-            senderRewardEligibility: senderRewardEligibility,
-            senderRewardCodeURL: senderRewardCodeURL
-        )
-    }
-    
-    public func setUserId(_ id : String) {
-        self.data.custom_id = id
-        Task {
-            await self.status()
-        }
-    }
-    
-    private func updateReceiverInfos() {
-        let referredInfo = data.referredInfo
-        self.receiverStatus = referredInfo?.referred_user.referred_status ?? .none
-        self.receiverOfferCodeURL = referredInfo?.appleOfferURL
-    }
-    
-    @objc private func monitorNetworkStatus()  {
-        guard monitor.pathUpdateHandler == nil else {
-            Task {
-                await self.status()
-            }
-            return
-        }
-        monitor.pathUpdateHandler = { path in
-            if path.status == .satisfied {
-                ReefReferral.logger.debug("🟢 Connection restored")
-                Task {
-                    await self.status()
-                }
-                
-            } else {
-                ReefReferral.logger.debug("🔴 Not internet connection")
-            }
-        }
-        monitor.start(queue: DispatchQueue.global(qos: .background))
-    }
-    
-    @discardableResult private func status() async -> Result<Reef.ReferralStatus, Error> {
-        guard let apiKey = apiKey else {
-            return .failure(Reef.ReefError.missingAPIKey)
-        }
-        
-        let statusRequest = StatusRequest(udid: data.udid, custom_id:self.data.custom_id, app_id: apiKey, receipt_data: receiptData)
-        let result = await ReefAPIClient.shared.send(statusRequest)
-        
-        switch result {
-        case .success(let infos):
-            DispatchQueue.main.async {
-                self.data.referringInfo = infos
-                self.data.save()
-                self.updateSenderInfos()
-            }
-            return .success(infos.status)
-            
-        case .failure(let error):
-            ReefReferral.logger.error("\(error)")
-            return .failure(error)
-        }
-       
-    }
-    
-    // MARK: - Common
-    
-    public func start(apiKey: String, delegate: ReefReferralDelegate? = nil, logLevel: Reef.LogLevel = .none) {
-        self.apiKey = apiKey
+
+    private let reefReferralInternal = ReefReferralInternal()
+
+
+    public func start(apiKey: String, delegate: ReefReferralDelegate? = nil, logLevel: ReefReferral.LogLevel = .none) {
         self.delegate = delegate
-        
-        // Custom log level
-        switch logLevel {
-        case .debug:
-            ReefReferral.logger.logLevel = .error
-        default:
-            ReefReferral.logger.logLevel = .critical
-        }
-        
-        self.monitorNetworkStatus()
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(monitorNetworkStatus),
-            name: UIApplication.didBecomeActiveNotification,
-            object: nil
-        )
+        reefReferralInternal.start(apiKey: apiKey, delegate: self, logLevel: logLevel)
     }
-    
-    public func refresh() {
-        Task {
-            await self.status()
-        }
-    }
-    
-    // MARK: - Sender
-        
-    public func triggerSenderSuccess() {
-        guard let _ = apiKey else {
-            ReefReferral.logger.critical("\(Reef.ReefError.missingAPIKey.localizedDescription)")
-            return
-        }
-        guard let link = data.referringInfo?.link else {
-            ReefReferral.logger.error("No referral link found")
-            return
-        }
-        
-        Task {
-            let request = NotifyReferringSuccessRequest(link_id: link.id)
-            let response = await ReefAPIClient.shared.send(request)
-            switch response {
-            case .success(let referringInfo):
-                DispatchQueue.main.async {
-                    self.data.referringInfo = referringInfo
-                    self.data.save()
-                    self.updateSenderInfos()
-                }
-            case .failure(let error):
-                ReefReferral.logger.error("\(error)")
+
+    public func getReferralInfo(cached: Bool = true) async throws -> ReferralInfo {
+        if cached {
+            let new = try? await reefReferralInternal.status()
+            if let newOrCached = new ?? getReferralInfoCached() {
+                return newOrCached
+            } else {
+                throw ReefError.infoUnavailable
             }
+        } else {
+            return try await reefReferralInternal.status()
         }
     }
-    
-    // MARK: - Receiver
-    
+
+    public func getReferralInfoCached() -> ReferralInfo? {
+        return ReferralInfo(reefReferralInternal.data)
+    }
+
+    public func setUserId(_ id : String) {
+        reefReferralInternal.setUserId(id)
+    }
+
+
     public func handleDeepLink(url: URL) {
-        guard let _ = apiKey else {
-            ReefReferral.logger.critical("\(Reef.ReefError.missingAPIKey.localizedDescription)")
-            return
-        }
-        
-        guard let linkId = url.absoluteString.components(separatedBy: "://").last else {
-            ReefReferral.logger.error("Error parsing link ID")
-            return
-        }
-        
-        Task {
-            let udid = self.data.custom_id ?? self.data.udid
-            let request = HandleDeepLinkRequest(link_id: linkId, udid: udid, receipt_data: receiptData)
-            let response = await ReefAPIClient.shared.send(request)
-            switch response {
-            case .success(let referredInfo):
-                
-                DispatchQueue.main.async {
-                    self.data.referredInfo = referredInfo
-                    self.data.save()
-                    self.updateReceiverInfos()
-                    if let url = referredInfo.appleOfferURL, referredInfo.offer_automatic_redirect {
-                        UIApplication.shared.open(url)
-                    }
-                }
-            case .failure(let error):
-                ReefReferral.logger.error("\(error)")
-            }
+        reefReferralInternal.handleDeepLink(url: url)
+    }
+
+    /// Helper function, use on UIWindowSceneDelegate.func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>)
+    public func handleDeepLink(URLContexts: Set<UIOpenURLContext>) {
+        for link in URLContexts {
+            handleDeepLink(url: link.url)
         }
     }
-    
+
+    /// Helper function, use on UIWindowSceneDelegate.scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions)
+    public func handleDeepLink(connectionOptions: UIScene.ConnectionOptions) {
+        handleDeepLink(URLContexts: connectionOptions.urlContexts)
+    }
+
+    public func setUserID(id: String)  {
+        reefReferralInternal.setUserId(id)
+    }
+
+    //MARK: Manual mode
+
+    public func triggerSenderSuccess() {
+        reefReferralInternal.triggerSenderSuccess()
+    }
+
     public func triggerReceiverSuccess() {
-        guard let _ = apiKey else {
-            ReefReferral.logger.critical("\(Reef.ReefError.missingAPIKey.localizedDescription)")
-            return
-        }
-        guard let referredUser = data.referredInfo?.referred_user else {
-            ReefReferral.logger.error("No referred user found")
-            return
-        }
-        
-        Task {
-            let request = NotifyReferredSuccessRequest(referred_user_id: referredUser.id)
-            let response = await ReefAPIClient.shared.send(request)
-            switch response {
-            case .success(let referredInfo):
-                data.referredInfo = referredInfo
-                data.save()
-                DispatchQueue.main.async {
-                    self.updateReceiverInfos()
-                }
-            case .failure(let error):
-                ReefReferral.logger.error("\(error)")
-            }
-        }
+        reefReferralInternal.triggerReceiverSuccess()
     }
-    
-    // MARK: - Dev Utils
-    
-    public func clear() {
-        data.referringInfo = nil
-        data.referredInfo = nil
-        data.save()
-        self.updateSenderInfos()
-        self.updateReceiverInfos()
+}
+
+extension ReefReferral: ReefReferralDelegatePassThrough {
+    func infoUpdated(referralInfo: ReferralInfo) {
+        delegate?.infoUpdated(referralInfo: referralInfo)
     }
 }

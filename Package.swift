@@ -7,7 +7,7 @@ import PackageDescription
 let package = Package(
     name: "reef-referral-ios",
     platforms: [
-        .iOS(.v14),
+        .iOS(.v13),
         .macOS(.v12)
     ],
     products: [
@@ -25,9 +25,7 @@ let package = Package(
             dependencies: [
                 .product(name: "Logging", package: "swift-log")
             ],
-            resources: [
-                .copy("README.md")
-            ]
+            resources: []
         ),
     ]
 )
