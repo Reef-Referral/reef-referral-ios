@@ -7,8 +7,8 @@
 
 import Foundation
 
-struct ReceiverInfo: Codable {
-    let referred_user : Receiver
+struct ReceiverInfo: Codable, Equatable {
+    let referred_status : ReefReferral.ReceiverOfferStatus
     let offer_automatic_redirect: Bool
     let apple_offer_url: String?
 
@@ -18,7 +18,7 @@ struct ReceiverInfo: Codable {
     }
 }
 
-struct Receiver: Codable {
+struct Receiver: Codable, Equatable {
     let id: String
     let udid: String
     let created_at: Date

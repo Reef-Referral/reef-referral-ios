@@ -23,7 +23,7 @@ extension ReefReferral {
                                     rewardEligibility: reefData.senderInfo?.link.reward_status ?? .not_eligible,
                                     offerCodeURL: reefData.senderInfo?.link.rewardURL)
 
-            let receiver = ReceiverInfo(rewardEligibility: reefData.receiverInfo?.referred_user.referred_status ?? .none,
+            let receiver = ReceiverInfo(rewardEligibility: reefData.receiverInfo?.referred_status ?? .none,
                                         offerCodeURL: reefData.receiverInfo?.appleOfferURL)
 
             senderInfo = sender

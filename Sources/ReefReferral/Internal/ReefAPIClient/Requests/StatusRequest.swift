@@ -9,7 +9,7 @@ import Foundation
 
 struct StatusResponse: Codable {
     let sender: SenderInfo
-    let receiver: ReceiverInfo?
+    let receiver: ReceiverInfo
 }
 struct StatusRequest: APIRequest {
     typealias Response = StatusResponse

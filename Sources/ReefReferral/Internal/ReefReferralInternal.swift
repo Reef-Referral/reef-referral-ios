@@ -21,7 +21,7 @@ class ReefReferralInternal {
 
     var delegate: ReefReferralDelegatePassThrough?
 
-    var data: ReefData = ReefData.load() { didSet { dataUpdated() }}
+    var data: ReefData = ReefData.load()
 
 
     func receiptData() -> String {
@@ -40,9 +40,22 @@ class ReefReferralInternal {
         }
     }
 
-    func dataUpdated() {
-        let info = ReefReferral.ReferralInfo(data)
-        delegate?.infoUpdated(referralInfo: info)
+    @MainActor
+    private func updateData(sender: SenderInfo? = nil, receiver: ReceiverInfo? = nil) {
+        let old = data
+
+        if let sender = sender {
+            data.senderInfo = sender
+        }
+        if let receiver = receiver {
+            data.receiverInfo = receiver
+        }
+        data.save()
+
+        if old != data {
+            let info = ReefReferral.ReferralInfo(data)
+            delegate?.infoUpdated(referralInfo: info)
+        }
     }
 
     @objc private func monitorNetworkStatus()  {
@@ -77,10 +90,7 @@ class ReefReferralInternal {
             let infos = try await api.send(statusRequest)
 
             return await MainActor.run {
-                self.data.senderInfo = infos.sender
-                self.data.receiverInfo = infos.receiver
-                self.data.save()
-                self.dataUpdated()
+                updateData(sender: infos.sender, receiver: infos.receiver)
                 return ReefReferral.ReferralInfo(data)
             }
         } catch {
@@ -134,12 +144,10 @@ class ReefReferralInternal {
 
             let request = NotifyReferringSuccessRequest(link_id: link.id)
             do {
-                let referringInfo = try await api.send(request)
+                let senderInfo = try await api.send(request)
 
                 await MainActor.run {
-                    self.data.senderInfo = referringInfo
-                    self.data.save()
-                    self.dataUpdated()
+                    self.updateData(sender: senderInfo)
                 }
 
             } catch {
@@ -169,9 +177,8 @@ class ReefReferralInternal {
                 let referredInfo = try await api.send(request)
 
                 await MainActor.run {
-                    self.data.receiverInfo = referredInfo
-                    self.data.save()
-                    self.dataUpdated()
+                    self.updateData(receiver: referredInfo)
+
                     if let url = referredInfo.appleOfferURL, referredInfo.offer_automatic_redirect {
                         UIApplication.shared.open(url)
                     }
@@ -198,9 +205,7 @@ class ReefReferralInternal {
 
                 let referredInfo = try await api.send(request)
                 await MainActor.run {
-                    self.data.receiverInfo = referredInfo
-                    self.data.save()
-                    self.dataUpdated()
+                    self.updateData(receiver: referredInfo)
                 }
 
             } catch {

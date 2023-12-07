@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ReefData: Codable {
+struct ReefData: Codable, Equatable {
 
     static let fileURL = FileManager.default
                         .urls(for: .documentDirectory, in: .userDomainMask)[0]

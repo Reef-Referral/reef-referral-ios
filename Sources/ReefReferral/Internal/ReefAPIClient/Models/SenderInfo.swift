@@ -8,10 +8,11 @@
 import Foundation
 
 
-struct SenderInfo: Codable {
+struct SenderInfo: Codable, Equatable {
     let link: ReferralLinkContent
     let offer: ReferralOffer
     let referred_users: [Receiver]
+
     var received : Int { return self.referred_users.filter({ $0.referred_status == .received }).count }
     var redeemed: Int { return self.referred_users.filter({ $0.referred_status == .redeemed }).count }
 
@@ -28,7 +29,7 @@ struct ReferralLink: Codable {
     let link: ReferralLinkContent
 }
 
-struct ReferralLinkContent: Codable {
+struct ReferralLinkContent: Codable, Equatable {
 
     let id: String
     let reward_status: ReefReferral.SenderRewardStatus
@@ -45,7 +46,7 @@ struct ReferralLinkContent: Codable {
     }
 }
 
-struct ReferralOffer: Codable {
+struct ReferralOffer: Codable, Equatable {
    let id: String
    let referral_offer_id: String
    let referral_offer_code: String

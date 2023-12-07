@@ -16,7 +16,7 @@ public class ReefReferral {
     public static var logger = Logger(label: "com.reef-referral.logger")
 
     public static let shared = ReefReferral()
-    public var delegate: ReefReferralDelegate?
+    public var delegate: ReefReferralDelegate? { didSet { delegateSet() }}
 
     private let reefReferralInternal = ReefReferralInternal()
 
@@ -76,6 +76,14 @@ public class ReefReferral {
 
     public func triggerReceiverSuccess() {
         reefReferralInternal.triggerReceiverSuccess()
+    }
+}
+
+private extension ReefReferral {
+    func delegateSet() {
+        if let info = self.getReferralInfoCached() {
+            delegate?.infoUpdated(referralInfo: info)
+        }
     }
 }
 
