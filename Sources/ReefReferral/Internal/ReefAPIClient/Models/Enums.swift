@@ -11,7 +11,7 @@ public extension ReefReferral {
     
     enum ReceiverOfferStatus: String, Codable {
         case not_eligible = "none"
-        case eligible = "eligible"
+        case eligible = "received"
         case redeemed
     }
 

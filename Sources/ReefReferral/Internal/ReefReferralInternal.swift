@@ -161,13 +161,19 @@ class ReefReferralInternal {
     func handleDeepLink(url: URL) {
         Task {
 
+            guard let scheme = url.scheme,
+               scheme.starts(with: "reef-referral") else {
+                // not a reef referral link
+                return
+            }
+
             guard let api = apiService else {
                 ReefReferral.logger.critical("\(ReefReferral.ReefError.missingAPIKey.localizedDescription)")
                 return
             }
 
-            guard let linkId = url.absoluteString.components(separatedBy: "://").last else {
-                ReefReferral.logger.error("Error parsing link ID")
+            guard let linkId = url.host else {
+                ReefReferral.logger.error("Error parsing link")
                 return
             }
 
