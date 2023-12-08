@@ -11,7 +11,7 @@ import UIKit
 import Network
 
 protocol ReefReferralDelegatePassThrough {
-    func infoUpdated(referralInfo: ReefReferral.ReferralInfo)
+    func statusUpdated(referralStatus: ReefReferral.ReferralStatus)
 }
 
 class ReefReferralInternal {
@@ -53,8 +53,8 @@ class ReefReferralInternal {
         data.save()
 
         if old != data {
-            let info = ReefReferral.ReferralInfo(data)
-            delegate?.infoUpdated(referralInfo: info)
+            let status = ReefReferral.ReferralStatus(data)
+            delegate?.statusUpdated(referralStatus: status)
         }
     }
 
@@ -79,7 +79,7 @@ class ReefReferralInternal {
         monitor.start(queue: DispatchQueue.global(qos: .background))
     }
 
-    func status() async throws -> ReefReferral.ReferralInfo {
+    func status() async throws -> ReefReferral.ReferralStatus {
         guard let api = apiService else {
             throw ReefReferral.ReefError.missingAPIKey
         }
@@ -91,7 +91,7 @@ class ReefReferralInternal {
 
             return await MainActor.run {
                 updateData(sender: infos.sender, receiver: infos.receiver)
-                return ReefReferral.ReferralInfo(data)
+                return ReefReferral.ReferralStatus(data)
             }
         } catch {
             ReefReferral.logger.error("\(error)")

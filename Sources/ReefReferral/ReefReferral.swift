@@ -5,20 +5,20 @@ import Network
 
 
 public protocol ReefReferralDelegate {
-    func infoUpdated(referralInfo: ReefReferral.ReferralInfo)
+    func statusUpdated(referralStatus: ReefReferral.ReferralStatus)
 }
 
 public extension ReefReferralDelegate {
-    func infoUpdated(referralInfo: ReefReferral.ReferralInfo) {}
+    func statusUpdated(referralStatus: ReefReferral.ReferralStatus) {}
 }
 
 public class ReefReferral {
-    public static var logger = Logger(label: "com.reef-referral.logger")
+    internal static var logger = Logger(label: "com.reef-referral.logger")
+    private let reefReferralInternal = ReefReferralInternal()
 
     public static let shared = ReefReferral()
     public var delegate: ReefReferralDelegate? { didSet { delegateSet() }}
 
-    private let reefReferralInternal = ReefReferralInternal()
 
 
     public func start(apiKey: String, delegate: ReefReferralDelegate? = nil, logLevel: ReefReferral.LogLevel = .none) {
@@ -26,10 +26,10 @@ public class ReefReferral {
         reefReferralInternal.start(apiKey: apiKey, delegate: self, logLevel: logLevel)
     }
 
-    public func getReferralInfo(cached: Bool = true) async throws -> ReferralInfo {
+    public func getReferralStatus(cached: Bool = true) async throws -> ReferralStatus {
         if cached {
             let new = try? await reefReferralInternal.status()
-            if let newOrCached = new ?? getReferralInfoCached() {
+            if let newOrCached = new ?? getReferralStatusCached() {
                 return newOrCached
             } else {
                 throw ReefError.infoUnavailable
@@ -39,8 +39,19 @@ public class ReefReferral {
         }
     }
 
-    public func getReferralInfoCached() -> ReferralInfo? {
-        return ReferralInfo(reefReferralInternal.data)
+    public func getReferralStatus(cached: Bool = true, callback: @escaping (Result<ReferralStatus, Error>)->Void) {
+        Task {
+            do {
+                let info = try await getReferralStatus(cached: cached)
+                callback(.success(info))
+            } catch {
+                callback(.failure(error))
+            }
+        }
+    }
+
+    public func getReferralStatusCached() -> ReferralStatus? {
+        return ReferralStatus(reefReferralInternal.data)
     }
 
     public func setUserId(_ id : String) {
@@ -81,14 +92,14 @@ public class ReefReferral {
 
 private extension ReefReferral {
     func delegateSet() {
-        if let info = self.getReferralInfoCached() {
-            delegate?.infoUpdated(referralInfo: info)
+        if let status = self.getReferralStatusCached() {
+            delegate?.statusUpdated(referralStatus: status)
         }
     }
 }
 
 extension ReefReferral: ReefReferralDelegatePassThrough {
-    func infoUpdated(referralInfo: ReferralInfo) {
-        delegate?.infoUpdated(referralInfo: referralInfo)
+    func statusUpdated(referralStatus: ReferralStatus) {
+        delegate?.statusUpdated(referralStatus: referralStatus)
     }
 }
