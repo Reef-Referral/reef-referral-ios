@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name           = 'ReefReferral'
-  s.version        = '0.0.0'
+  s.version        = '1.0.0'
   s.summary        = 'ReefReferral iOS SDK'
   s.author         = 'ReefReferral'
   s.homepage       = 'https://www.reefreferral.com/'
