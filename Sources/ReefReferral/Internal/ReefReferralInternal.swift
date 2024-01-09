@@ -58,27 +58,6 @@ class ReefReferralInternal {
         }
     }
 
-    @objc private func monitorNetworkStatus()  {
-        guard monitor.pathUpdateHandler == nil else {
-            Task {
-                try? await self.status()
-            }
-            return
-        }
-        monitor.pathUpdateHandler = { path in
-            if path.status == .satisfied {
-                ReefReferral.logger.debug("🟢 Connection restored")
-                Task {
-                    try? await self.status()
-                }
-
-            } else {
-                ReefReferral.logger.debug("🔴 Not internet connection")
-            }
-        }
-        monitor.start(queue: DispatchQueue.global(qos: .background))
-    }
-
     func status() async throws -> ReefReferral.ReferralStatus {
         guard let api = apiService else {
             throw ReefReferral.ReefError.missingAPIKey
@@ -113,16 +92,17 @@ class ReefReferralInternal {
             ReefReferral.logger.logLevel = .error
         }
 
-        self.monitorNetworkStatus()
+        self.refresh()
 
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(monitorNetworkStatus),
+            selector: #selector(refresh),
             name: UIApplication.didBecomeActiveNotification,
             object: nil
         )
     }
 
+    @objc
     func refresh() {
         Task {
             try? await self.status()
