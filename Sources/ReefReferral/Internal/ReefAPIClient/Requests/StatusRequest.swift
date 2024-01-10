@@ -15,7 +15,6 @@ struct StatusRequest: APIRequest {
     typealias Response = StatusResponse
 
     var udid: String
-    var custom_id: String?
     let receipt_data: String
     
     var resourceName: String {

@@ -62,8 +62,9 @@ class ReefReferralInternal {
         guard let api = apiService else {
             throw ReefReferral.ReefError.missingAPIKey
         }
+        let userId = self.data.id
 
-        let statusRequest = StatusRequest(udid: data.udid, custom_id:self.data.custom_id, receipt_data: receiptData())
+        let statusRequest = StatusRequest(udid: userId, receipt_data: receiptData())
 
         do {
             let infos = try await api.send(statusRequest)
@@ -157,8 +158,8 @@ class ReefReferralInternal {
                 return
             }
 
-            let udid = self.data.custom_id ?? self.data.udid
-            let request = HandleDeepLinkRequest(link_id: linkId, udid: udid, receipt_data: receiptData())
+            let userId = self.data.id
+            let request = HandleDeepLinkRequest(link_id: linkId, udid: userId, receipt_data: receiptData())
             do {
                 let referredInfo = try await api.send(request)
 
@@ -184,9 +185,9 @@ class ReefReferralInternal {
                 return
             }
 
-            let udid = self.data.custom_id ?? self.data.udid
+            let userId = self.data.id
 
-            let request = NotifyReferredSuccessRequest(udid: udid)
+            let request = NotifyReferredSuccessRequest(udid: userId)
             do {
 
                 let referredInfo = try await api.send(request)

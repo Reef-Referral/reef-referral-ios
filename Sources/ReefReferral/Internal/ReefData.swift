@@ -13,7 +13,9 @@ struct ReefData: Codable, Equatable {
                         .urls(for: .documentDirectory, in: .userDomainMask)[0]
                         .appendingPathComponent("reef_data.json")
     
-    var udid: String = UUID().uuidString
+    private var udid: String = UUID().uuidString
+
+    var id: String { get { custom_id ?? udid }}
     var custom_id: String?
     
     var senderInfo: SenderInfo?

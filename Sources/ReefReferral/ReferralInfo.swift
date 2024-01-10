@@ -28,7 +28,7 @@ extension ReefReferral {
 
             senderStatus = sender
             receiverStatus = receiver
-            userID = reefData.custom_id ?? reefData.udid
+            userID = reefData.id
         }
     }
 
