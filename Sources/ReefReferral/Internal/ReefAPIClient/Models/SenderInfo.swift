@@ -44,6 +44,20 @@ struct ReferralLinkContent: Codable, Equatable {
     var linkURL: URL {
         return URL(string: link_url)!
     }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(String.self, forKey: .id)
+        self.reward_status = try container.decode(ReefReferral.SenderRewardStatus.self, forKey: .reward_status)
+        self.reward_offer_url = try container.decodeIfPresent(String.self, forKey: .reward_offer_url)
+
+        // check if link valid
+        let linkURL = try container.decode(String.self, forKey: .link_url)
+        if URL(string: linkURL) == nil {
+            throw DecodingError.dataCorruptedError(forKey: .link_url, in: container.self, debugDescription: "Link URL is not valid URL. Check if reef link domain is a valid domain.")
+        }
+        self.link_url = linkURL
+    }
 }
 
 struct ReferralOffer: Codable, Equatable {

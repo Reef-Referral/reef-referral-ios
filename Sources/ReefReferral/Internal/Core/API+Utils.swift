@@ -51,7 +51,7 @@ extension Dictionary {
         var components: [(String, String)] = []
         
         for key in self.keys {
-            let value = self[key]!
+            let value = self[key]
             let tuple = (String(describing:key), String(describing: value))
             components.append(tuple)
         }

@@ -19,7 +19,6 @@ protocol API {
 protocol APIClient {
     var api : API {get set}
     func parameters<T: APIRequest>(for request: T) -> Parameters
-    func url<T: APIRequest>(for request: T) -> URL
     func send<T: APIRequest>(_ request: T) async throws -> T.Response
     func decode<T: APIRequest>(_ data: Data, statusCode: Int, request: T) async throws -> T.Response
 }
@@ -33,26 +32,7 @@ extension APIClient {
         }
         return params
     }
-    
-    func url<T: APIRequest>(for request: T) -> URL {
-        guard   let endpointURL = URL(string: request.resourceName, relativeTo: api.baseEndpointUrl),
-                var components = URLComponents(url: endpointURL,
-                                           resolvingAgainstBaseURL: true) else {
-                                            fatalError("Invalid resourceName: \(request.resourceName)")
-        }
-        
-        switch request.httpMethod {
-        case .get:
-            components.queryItems = self.parameters(for: request).queryItems.sorted(by: { elemA, elemB in
-                elemA.name > elemB.name
-            })
-            break
-        default:
-            break
-        }
-        return components.url!
-    }
-    
+
     /// Sends a request to servers, calling the completion method when finished
     func send<T: APIRequest>(_ request: T) async throws -> T.Response {
         let urlRequest = self.endpoint(for: request)
@@ -74,7 +54,7 @@ extension APIClient {
         let endTime = Date().timeIntervalSince1970
         let elapsedTime = endTime - startTime
         let elapsedTimeString = "\(Int(elapsedTime * 1000)) ms"
-        ReefReferral.logger.debug("<--- /\(urlRequest.url!.lastPathComponent) [\(elapsedTimeString)]")
+        ReefReferral.logger.debug("<--- /\(urlRequest.url?.lastPathComponent ?? "") [\(elapsedTimeString)]")
         if !string.isEmpty {
             ReefReferral.logger.debug("\(string)")
         }
